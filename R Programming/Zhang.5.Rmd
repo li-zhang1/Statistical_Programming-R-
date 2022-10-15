@@ -1,0 +1,89 @@
+---
+title: "Homework5"
+author: "Li Zhang"
+date: "09/23/2021"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+# Exercise 3.12
+
+Let subset.iris <- as.matrix(iris[1:10, 1:4]), Using apply function to calculate the mean of subset.iris by column.
+```{r}
+
+subset.iris <- as.matrix(iris[1:10, 1:4])
+apply(subset.iris, 2, mean)
+```
+
+# Exercise 3.13
+
+Let subset.iris.2 <- as.matrix(iris[, 1:4]), fill blanks in the find.max function defined below to find the maximal value in each column of subset.iris.2.
+```{r}
+
+find.max <- function(x){
+  y <- function(xcol){
+    return(which.max(xcol))
+}
+  return(apply(x, 2, y))
+}
+
+
+subset.iris.2 <- as.matrix(iris[, 1:4])
+find.max(subset.iris.2)
+```
+
+# Exercise 3.14
+
+Using the mosaic.plot() function to blur the image of mona_lisa.pgm by adding mosaic to her eyes region. Your output should look like the graph below.
+
+```{r}
+
+library(pixmap)
+mona_lisa <- read.pnm("mona_lisa.pgm",cellres = 1)
+#plot(mona_lisa)
+#str(mona_lisa)
+mosaic.plot <- function(image, yrange, xrange){
+  length.y <- length(yrange)
+  length.x <- length(xrange)
+  image2 <- image
+  whitenoise <- matrix(nrow = length.y, ncol = length.x, runif(length.y * length.x))
+  image2@grey[yrange, xrange] <- whitenoise
+  return(image2)
+}
+mona_lisa.mosaic <- mosaic.plot(mona_lisa, 60:85, 82:148)
+plot(mona_lisa.mosaic)
+
+
+
+
+
+
+```
+
+
+# Exercise 3.15
+
+Fill in blanks of the following function so that the eyes region of Mona Lisa is covered by pure color, not mosaic.
+
+Setting the degree=0, 0.5 and 1 respectively, plot the images of Mona Lisa that eyes region are covered by pure colors.
+```{r}
+
+mosaic.plot.2 <- function(picture, yrange, xrange, degree){
+length.y <- length(yrange)
+length.x <- length(xrange)
+pic2 <- picture
+pic2@grey[yrange,xrange] <- degree
+return(pic2)
+}
+mona_lisa.mosaic <- mosaic.plot.2(mona_lisa, 60:85, 82:148, 0)
+plot(mona_lisa.mosaic)
+
+mona_lisa.mosaic <- mosaic.plot.2(mona_lisa, 60:85, 82:148, 0.5)
+plot(mona_lisa.mosaic)
+
+mona_lisa.mosaic <- mosaic.plot.2(mona_lisa, 60:85, 82:148, 1)
+plot(mona_lisa.mosaic)
+
+
+```

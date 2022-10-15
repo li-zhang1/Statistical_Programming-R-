@@ -1,0 +1,140 @@
+---
+title: "Homework4"
+author: "Li Zhang"
+date: "09/13/2021"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+
+## Exercise 3.2
+
+Suppose a vector is defined as x <- c(12, 56, 31, -5, 7).
+
+a. Calculate the mean of all elements in x and assign it to y.
+b. Square each element in x and assign the results to a new vector z.
+```{r}
+x <- c(12, 56, 31, -5, 7)
+
+# The mean of all elements in x
+y <- mean(x)
+y
+
+# Square each element in x
+z <- x^2
+z
+
+
+```
+
+## Exercise 3.3
+
+Use Google to find functions which set and get the current working directory in R, respectively.
+```{r}
+
+#setwd(dir) is used to set the current working directory.
+setwd("/Users/zhangli/Desktop")
+
+
+#getwd returns the current working directory.
+getwd()
+
+
+```
+
+
+## Exercise 3.4
+
+Use Google to find the function which lists all the files in the current working folder in R.
+```{r}
+
+#Function that lists all the files in the current working folder in R
+#list.files()
+
+#or we can use this function.
+#dir()
+
+```
+
+
+## Exercise 3.5
+Compute 1+2+3… +1000 with one line of R code. Hint: examine the example code for sum( ) function in the R help document.
+
+```{r}
+
+sum(1:1000)
+
+```
+
+
+## Exercise 3.6
+Suppose a vector var1 <- c(NA, 334, 566, 319, NA, -307).
+
+Obtain a new vector var2 which removes all NAs from var1.
+Using the argument na.rm to calculate the mean of var1. Make sure you ignore all NAs.
+```{r}
+# Obtain a new vector var2 which removes all NAs from var1
+var1 <- c(NA, 334, 566, 319, NA, -307)
+var2 <- var1[!is.na(var1)]
+
+# Using the argument na.rm to calculate the mean of var1
+mean(var1, na.rm = TRUE)
+
+
+```
+
+
+## Exercise 3.7
+Using sample selection function randomly select 10 integers from 1 to 100. Create a vector y which satisfies the following conditions: if an selected integer is an even number, then y returns ‘even,’ otherwise y returns ‘odd.’
+```{r}
+
+x <-sample(1:100, 10)
+y <- ifelse(x%%2 == 0, "even", "odd")
+y
+
+
+```
+
+
+## Exercise 3.8
+Did Mickey catch more fishes than Tom and Jerry combined? Write R code to verify this statement using the fishes vector and return a TRUE or FALSE value.
+```{r}
+fishes<- c(7, 3, 9)
+fishes[3] > sum(fishes[1:2])
+
+```
+
+
+## Exercise 3.9
+Using the name rather than the index in the vector fisher, assign a character ‘Ten’ to Tom.
+```{r}
+fisher<- c(7, 4, 9) 
+names(fisher) <- c("Tom", "Jerry", "Mickey")
+fisher["Tom"] <- 'Ten'
+fisher
+
+```
+
+
+## Exercise 3.10
+Create a vector representing the prices of groceries, bread $2.5, milk $3.1, jam $5.3, beer $9.1. And create a bar plot to represent this information.
+```{r}
+groceries <- c(2.5, 3.1, 5.3, 9.1)
+names(groceries) <- c("bread", "milk", "jam", "beer")
+groceries
+barplot(groceries, main = "Groceries")
+
+```
+
+
+
+## Exercise 3.11
+Create a vector with 21 integers from -10 to 10, and store it in the x variable. Then create a scatter plot of x^2 against x.
+```{r}
+x <- seq(-10, 10, length = 21)
+plot(x, x^2)
+
+```
+

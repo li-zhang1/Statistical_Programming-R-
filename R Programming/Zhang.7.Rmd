@@ -1,0 +1,108 @@
+---
+title: "Homework 7"
+author: "Li Zhang"
+date: "10/03/2021"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+
+### Exercise 3.20
+
+In the iris flower dataset iris, define a new column called FullName which contains the full species name by adding “Iris“ in front of species name. In other words, “setosa” should become “Iris setosa,” “virginica” would be “Iris virginica,” and “versicolor” needs to be “Iris versicolor.”
+```{r}
+iris$FullName <-paste("Iris", iris$Species)
+head(iris)
+```
+
+### Exercise 3.21
+
+Access the second component in list1 by three ways as we introduced above. What is the type of list1[“Hobby”] and list1[[“Hobby”]] respectively?
+list1 <- list(Name = “Tom,” Hobby = “Fishing,” Num.fish = c(16, 27, 5))
+```{r}
+
+list1 <- list(name = "Tom", Hobby = "Fishing", Num.fish = c(16, 27, 5))
+
+# way 1
+list1[[2]]
+
+# way 2
+list1$Hobby
+
+# way 3
+list1[["Hobby"]]
+
+# Type of list1["Hobby"]
+class(list1["Hobby"])
+
+# Type of list1[["Hobby"]]
+class(list1[["Hobby"]])
+
+
+
+```
+
+
+### Exercise 3.22
+
+Based on the data set of sale.tag, choose all correct answers from the following options A - F.
+
+```{r}
+sales <- c(100, 105, 98, 112)
+seasons <- c("Spring", "Summer", "Fall", "Winter")
+sale.tag <- list()               
+sale.tag[seasons] <- sales
+
+# A: sale.tag[[1]]
+# B: sale.tag[[Spring]]
+# C: sale.tag[[“Spring”]]
+# D: sale.tag[“Spring”]
+# E: sale.tag[1]
+# F: sale.tag[Spring]
+
+## Which options return a vector. Answer: A, C
+## Which options return a list. Answer: D, E
+## Which options return an error. Answer: B, F
+
+
+
+
+```
+
+
+### Exercise 3.23
+
+Fill blanks in the function my.fun() so that for a given list, the function returns all locations of each element and sort the frequency of the elements in increasing order. Then apply my.fun() to a set of gender:
+F F M M M M I I F I F M I F M I I M I I F
+Where F, M and I represent Female, Male and Infant respectively.
+
+```{r}
+
+my.fun <- function(f){ 
+y <- unlist(f)
+x <- list()
+for (i in 1:length(y)){
+g1 <- y[i]
+x[[g1]] <- c(x[[g1]],i)
+} 
+freq <- sapply(x, length)
+z <- sort(freq, decreasing = F)
+lst <- list(x, z)
+return (lst)
+}
+gender <- list("F","F", "M", "M", "M", "M", "I", "I", "F", "I", "F","M","I","F","M", "I", "I", "M", "I", "I", "F" )
+
+my.fun(gender)
+
+
+
+```
+
+
+
+
+
+
+

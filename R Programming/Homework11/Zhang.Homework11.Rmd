@@ -1,0 +1,276 @@
+---
+title: "Homework 11"
+author: "Li Zhang"
+date: "11/22/2021"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Create a folder, download the data file “state_employee_salary_data_2017.csv” into it, and create an Rstudio project in the folder. Read in the data file, peak the structure of your data set and clean it step by step:
+```{r}
+
+# Read in the data file
+raw0 <- read.csv("state_employee_salary_data_2017.csv") 
+
+# Peak the structure of the data set
+str(raw0)      
+
+```
+
+
+
+## 10.1.a 
+Select only columns of “EmplId.Empl.Rcd,” “Bi.Weekly.Comp.Rate,” “Age,” “Ethnic.Grp,” “Sex,” “Full.Part,” “City,” get summary information for all these variables. Make sure “EmplId.Empl.Rcd,” “Sex,” “Ethnic.Grp” to be factors, “Age” and “Bi.Weekly.Comp.Rate” to be numerics.
+```{r}
+# Select certain columns from the original dataset.
+raw1 <- raw0[, c("EmplId.Empl.Rcd","Bi.Weekly.Comp.Rate", 
+                 "Age", "Ethnic.Grp", "Sex", "Full.Part", "City")]
+
+# Set some variables to be factors
+raw1$EmplId.Empl.Rcd <- as.factor(raw1$EmplId.Empl.Rcd)
+raw1$Sex <- as.factor(raw1$Sex)
+raw1$Ethnic.Grp <- as.factor(raw1$Ethnic.Grp)
+
+# Set some variables to be numerics
+raw1$Age <- as.numeric(raw1$Age)
+raw1$Bi.Weekly.Comp.Rate <- as.numeric(raw1$Bi.Weekly.Comp.Rate)
+
+
+#Summary information for all these variables
+summary(raw1)
+
+
+str(raw1) # peak the structure of the raw1 data.
+
+
+```
+
+## 10.1.b
+Pick up full-time employees in the city “Hartford.”
+```{r, warning=FALSE}
+library(dplyr)
+
+# pick full-time employees in the city Hartford by using filter() function.
+raw2 <- filter(raw1, Full.Part == "F" & City == "Hartford")
+head(raw2)
+```
+
+## 10.1.c
+Select only those employees with 26 paychecks for the 2017 fiscal year(Hint: Each employee has a unique ID of “EmplId.Empl.Rcd”).
+```{r}
+
+# Check the situation of employees.
+EmplId.Empl.Rcd <- as.character((raw2$EmplId.Empl.Rcd))
+counts <- data.frame(table(EmplId.Empl.Rcd))
+head(counts)
+PersonOccurCount <- table(counts[, 2])
+plot(PersonOccurCount, col = rainbow(30), 
+     xlab = "Occurance of employee", ylab = "Count of employee")
+# The most employee-occurrence is 26.
+
+subEmpl26 <- counts[which(counts$Freq != 26),]
+len <- length(subEmpl26$EmplId.Empl.Rcd)
+for (i in 1: len) {
+  j <- which(raw2$EmplId.Empl.Rcd == as.character(subEmpl26$EmplId.Empl.Rcd)[i])
+  if (i == 1){
+    id = j
+  } else if(i>1){
+    id = c(id, j)
+  }
+}
+
+# Select only those employees with 26 paychecks 
+# by removing employees with check-count unequal to 26.
+raw26 <- raw2[-id, ] 
+#head(raw26)
+
+# Check the result
+EmplId.Empl.Rcd <- as.character((raw26$EmplId.Empl.Rcd))
+counts <- data.frame(table(EmplId.Empl.Rcd))
+head(counts)
+PersonOccurCount <- table(counts[, 2])
+plot(PersonOccurCount, col = rainbow(30), 
+     xlab = "Occurance of employee", ylab = "Count of employee")
+
+```
+
+
+## 10.1.d
+Remove sex group other than “F” and “M” if there is any. Hint: Use str() after droplevels().
+```{r}
+# Remove sex group other than "F" and "M".
+raw.d <- raw26[raw26$Sex == "F" |raw26$Sex == "M", ] %>% droplevels()
+str(raw.d)
+
+# Check whether sex "U" employee is still in our data.
+nrow(raw.d[which(raw.d$Sex == "U"),])
+#raw.d
+
+
+```
+
+## 10.1.e
+Replace level of empty space in “Ethnic.Grp” as “unknown.”
+```{r}
+levels(raw.d$Ethnic.Grp)[levels(raw.d$Ethnic.Grp) == ""] <- "unknown"
+head(raw.d)
+#summary(raw.d)
+```
+
+
+## 10.1.f
+Remove employees with “Bi.Weekly.Comp.Rate” equal or less than zero if there is any.
+```{r}
+empl.f <- raw.d[which(raw.d$Bi.Weekly.Comp.Rate <= 0), ]
+raw.f <- raw.d[-which(raw.d$Bi.Weekly.Comp.Rate == empl.f$Bi.Weekly.Comp.Rate),]
+head(raw.f)
+
+# Check whether employees with “Bi.Weekly.Comp.Rate” equal or less than zero is still in data
+nrow(raw.f[which(raw.f$Bi.Weekly.Comp.Rate <= 0),])
+
+```
+
+## 10.1.g
+Group your data set by “EmplId.Empl.Rcd,” “Ethnic.Grp,” and “Sex.” For each employee, take the mean of “Age,” and the mean of “Bi.Weekly.Comp.Rate.” Then round the means to the nearest integer and rename them as “Age” and “Bi.Weekly.Rate.”
+```{r, warning=FALSE}
+
+
+raw.g <- raw.f %>%
+  group_by(EmplId.Empl.Rcd, Ethnic.Grp, Sex) %>%
+  summarise(Age = round(mean(Age),0), 
+            Bi.Weekly.Rate = round(mean(Bi.Weekly.Comp.Rate),0)) %>%
+  droplevels()
+head(raw.g)
+
+  
+
+
+```
+
+## 10.1.h
+Show structure and summary of your data set.
+```{r}
+
+str(data.frame(raw.g)) # structure of the data set
+
+
+summary(raw.g) # summary of the data set
+
+
+```
+
+
+
+
+
+
+## 10.1.j
+Using pie plot to show the distribution of “Sex.”
+```{r}
+
+library(plotrix)
+counts <- sort(table(raw.g$Sex), decreasing = TRUE)
+p <- paste(round(counts/sum(counts),2)*100, "%", sep = "")
+lbls <- paste(names(counts), "\n", counts, p, sep = "  ")
+pie3D(counts, labels = lbls, explode = 0.05, main = "Pie chart of sex", labelcex = 1.0,
+      labelpos = c(1.8, 5.0))
+```
+
+There are around 22% more female than males in the city Hartford.
+
+## 10.1.k
+List the count number and percent of employees in each ethnic group.
+```{r}
+
+library(ggplot2)
+
+# count number in each ethnic group
+counts.k<-data.frame(sort(table(raw.g$Ethnic.Grp), decreasing = TRUE))
+colnames(counts.k)<-c("Ethnic.Grp", "Count")
+counts.k # print table of counts
+
+
+# Percent of employees in eacg ethnic group
+percent.k <-paste(round(counts.k$Count / sum(counts.k$Count),3)*100, "%", sep = "")
+#percent.k  
+ggplot(counts.k, aes(x = reorder(Ethnic.Grp, Count), y = Count)) +
+  geom_bar(stat = 'identity', fill = rainbow(8)) + 
+  geom_text(aes(x = c(8:1), y = Count + 100 , label = percent.k), size = 3.5) +
+  labs(x = 'Ethnic Group', y = 'Percent', title = 'Percent of Employees') +  
+  theme_bw() +  
+  #coord_flip() +  # Flip the plot
+  theme(plot.title = element_text(hjust = 0.5)) 
+```
+
+## 10.1.l
+Using a scatter plot to view the relationship between average “Bi.Weekly.Rate” and “Age,” add a regression line and give your interpretation.
+```{r}
+
+x <- raw.g$Age
+y <- raw.g$Bi.Weekly.Rate 
+
+# create a scatter plot
+plot(x, y, main = "Relationship", 
+     xlab = "Average Age", 
+     ylab = "Average Bi.Weekly.Rate")
+
+# Add a regression line
+abline(lm(y ~ x, data = raw.g), col = "red")
+
+
+```
+
+Interpretation:
+As Average Age increases, the average Bi.Weekly.Rate will increase but very slowly. Average Age from 50 to 60 has relatively higher average Bi.Weekly.Rate.
+
+
+## 10.1.m
+Using box plot to view the relationship between “Bi.Weekly.Rate” by Ethnic groups.
+```{r}
+library(ggplot2)
+Ethnic.Group <- raw.g$Ethnic.Grp
+Bi.Weekly.Rate <-raw.g$Bi.Weekly.Rate
+ggplot() +
+  geom_boxplot(data = raw.g, aes(x = Ethnic.Group, y= Bi.Weekly.Rate, fill = Ethnic.Group))+
+  labs(x= "Ethnic.Group", y = "Bi.Weekly.Rate", title = "Relationship") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme(axis.text = element_text(angle = 45, vjust = 1, hjust =1))
+
+
+```
+
+
+## 10.1.n
+Using a density plot similar to Figure 10.8 to view the distribution of “Bi.Weekly.Rate” for different sex. Package ggplot2 is referred.
+```{r}
+
+library(agricolae)
+#par(mfrow = c(1,2))
+
+# Density plot for each sex
+df1 <- raw.g[which(raw.g$Sex == "F"), ]
+df2 <- raw.g[which(raw.g$Sex == "M"), ]
+plot(density(df1$Bi.Weekly.Rate), col = "red", xlab = "Bi.Weekly.Rate", 
+     main = "Density plot for each sex")
+lines(density(df2$Bi.Weekly.Rate), col = "blue")  
+# Add density line of df2 to density plot of df1
+
+legend("topright", c("M","F"), lty = c(1, 1), col = c("blue", "red"))  # Add legend
+
+# LSD comparison for sex group
+model <- aov(raw.g$Bi.Weekly.Rate~raw.g$Sex)
+res <- LSD.test(raw.g$Bi.Weekly.Rate, raw.g$Sex, 
+                DFerror = model$df.residual, MSerror = anova(model)[["Mean Sq"]][2]) 
+rate <- round(res$groups[, "raw.g$Bi.Weekly.Rate"], 1)
+plot(res, xlab = "Sex Group", ylab = "Range between max and min", 
+     main = "Sex groups and variation range")
+text(x = c(seq(from = 1, to = 10, by = 1.2)), y = 3500, rate)
+
+
+```
