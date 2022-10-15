@@ -1,0 +1,358 @@
+---
+title: "8 Processing Text Homework"
+author: Li Zhang'
+date: '07/20/2021'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+*Warning* I will continue restricting the use of external libraries in R, particularly `tidyverse` libraries. You may choose to use `ggplot2`, but take care that the plots you produce are at least as readable as the equivalent plots in base R. You will be allowed to use whatever libraries tickle your fancy in the final project.
+
+If you choose SAS for an exercise, you may use `IML`, `DATA` operations or `PROC SQL` at your discretion.
+
+## Reuse
+
+For some of these exercises, you may be able to reuse functions written in prior homework. Include those functions here.
+
+```{r}
+
+```
+
+
+# Exercise 1.
+
+Write a loop or a function to convert a matrix to a `CSV` compatible string. For example, given a matrix of the form
+
+$$
+\left(\begin{array}{rrr}
+ 1 & 2 & 3 \\
+ 4 & 5 & 6 \\
+ \end{array}\right) 
+$$
+
+produce a string of the form
+
+`1,2,3\n4,5,6`
+
+where `\n` is the newline character. Use the matrix below as a test case.
+
+```{r}
+Wansink <- matrix(c(268.1, 271.1, 280.9, 294.7, 285.6, 288.6, 384.4,
+                     124.8, 124.2, 116.2, 117.7, 118.3, 122.0, 168.3),ncol=2)
+Wansink
+
+#Function to convert a matrix to a "CSV" compatible string.
+Convert_Matrix_to_String<-function(matrix_1){
+  
+  str_1<-paste(matrix_1[,1],matrix_1[,2], sep=",", collapse="\n" )
+  print(str_1)
+}
+
+Convert_Matrix_to_String(Wansink)
+
+#Method1
+#str_1<-paste(Wansink[,1],Wansink[,2], sep=",", collapse="\n" )
+
+#Method2
+#paste(apply(Wansink, 1, paste, collapse=","), collapse="\n")
+
+#Method3
+#do.call(paste, c(as.data.frame(Wansink), collapse="\n", sep=",")) 
+
+
+```
+
+If you choose SAS, I've include `Wansink` as a data table and framework code for IML in the template. I used the `CATX` function in IML. I found I could do this in one line in R, with judicious use of `apply`, but I haven't found the equivalent in IML. Instead, I used a pair of nested loops to accumulate an increasingly longer string.
+
+
+# Exercise 2.
+
+Calculate MSW, MSB, $F$ and $p$ for the data from Wansink Table 1 (Homework 4, Exercise 3) where
+
+$$
+MSB = \frac{\sum_i n_i(x_i-\bar{x})^2}{k-1}
+$$
+
+$$
+MSW =  \frac{\sum_i (n_i-1)s_i^2}{N-k}
+$$
+
+and $F=MSB/MSW$.
+
+Start with the string:
+
+```{r}
+WansinkString <- "268.1,271.1,280.9,294.7,285.6,288.6,384.4\n
+                  124.8,124.2,116.2,117.7,118.3,122.0,168.3\n
+                  18,18,18,18,18,18,18"
+
+sub_exe2<-strsplit(WansinkString,split="\n")
+sub_exe2<-unlist(sub_exe2)
+tokenize_exe2<-strsplit(sub_exe2, split=",")
+vector_exe2<-lapply(tokenize_exe2,as.numeric)
+#vector_exe2
+
+matrix_1<-matrix(unlist(vector_exe2), nrow=3, byrow=TRUE)
+rownames(matrix_1)<-c("CaloriesPerServingMean", "CaloriesPerServingSD","n")
+colnames(matrix_1)<-c("1936","1946","1951","1963", "1975", "1997","2006")
+matrix_1
+
+```
+
+Split this string into 3 substrings based on the newline character (`'\n'`). Next, tokenize the strings based on the `','` character and convert the tokens to a create vectors of numeric values (i.e. `CaloriesPerServingMean`,  `CaloriesPerServingSD`, `n`). Note this is roughly the reverse process from Exercise 1.
+
+Use these vectors to compute and print $MSW$, $MSB$, $F$ and $p$.
+
+```{r}
+k=ncol(matrix_1)
+n=matrix_1[3,1]
+N=k*n  
+
+MSW=((n-1)*(sum(matrix_1[2,]^2)))/(N-k)
+MSW
+
+x_bar=(18*sum(matrix_1[1,]))/N
+MSB=(n*(sum((matrix_1[1,]-x_bar)^2)))/(k-1)
+MSB
+
+F_ratio=MSB/MSW
+F_ratio
+
+p_value_1=1-pf(F_ratio, (k-1), (N-k))
+p_value_1
+
+
+```
+
+If you use SAS, I've provided macro variables that can be tokenized in either macro language or using SAS functions. You can mix and match macro, DATA, IML or SQL processing as you wish, but you must write code to convert the text into numeric tokens before processing.
+
+Compare your results from previous homework, or to the resource given in previous homework, to confirm that the text was correctly converted to numeric values.
+
+
+# Exercise 3.
+
+Load the file `openmat2015.csv` (for SAS use `openmat2015SAS.csv`) into a data table or data frame. We wish to know how many went on to compete in the national championship in 2019, so we will merge this table with the data from Homework 7, `ncaa2019.csv`.  Merge the data on `First` and `Last` names. The `openmat2015.csv` data contains only a single column, `Name`. You will need to split the text in this column to create the columns `First` and `Last` required to merge with `ncaa2019.csv`. 
+
+For example, the $22^{nd}$ wrestler in `openmat2015.csv`, `Danny Vega` will be split into `Danny` and `Vega`. Danny did not wrestle in the 2019 NCAA tournament, but he did wrestle the 2021 tournament for SDSU. The $43^th$ wrestler in `openmat2015.csv` will be be split into `Yianni`, `Diakomihalis`. Yianni was the national champion in 2019 at 141 pounds. Thus, the merged data set will contain `Yianni`, `Diakomihalis`, but not `Danny`, `Vega`.
+**Do not print these tables in the submitted work**
+
+What is the relationship between high school (`openmat2015.csv`) and college weight classes (`ncaa2019.csv`)? Print a contingency `table` comparing `Weight` from `openmat2015.csv` and `Weight` from `ncaa2019.csv`, or produce a scatter plot or box-whisker plot, using high school weight class as the independent variable. 
+
+
+```{r}
+table_exe3_2015<-read.csv("openmat2015.csv")
+#table_exe3_2015
+
+
+table_exe3_2019<-read.csv("ncaa2019.csv")
+#table_exe3_2019
+
+#Method1
+st<-strsplit(table_exe3_2015$Name, " ")
+table_exe3_2015$First<-unlist(lapply(st,`[`,1))
+table_exe3_2015$Last<-unlist(lapply(st,`[`,2))
+table_exe3_2015$Name=NULL
+table_exe3_2015<-table_exe3_2015[c(1,2,9,8,3,4,5,6,7)]
+#table_exe3_2015
+
+#Method2
+#table_exe3_2015$First<-sapply(st, "[",1)
+#table_exe3_2015$Last<-sapply(st, "[",2)
+#table_exe3_2015$Name=NULL
+#table_exe3_2015
+
+exe4_table<-merge(table_exe3_2015, table_exe3_2019, by=c("Last", "First"))
+#exe4_table
+
+
+contingency_table<-table(exe4_table$Weight.x, exe4_table$Weight.y)
+contingency_table
+library(scales)
+percent((sum(contingency_table)-11)/sum(contingency_table))
+
+# 86% wrestlers gain their weight from high school to collage.
+
+
+```
+
+
+# Exercise 4
+
+Use the file `vehicles.csv` (or `vehiclesSAS.csv` for SAS). These data were downloaded and modified from https://www.fueleconomy.gov/feg/download.shtml. 
+
+Read the data into a data frame or data table. This file has ~35000 rows; we will reduce the size of this data by filtering for text or numeric values in different columns. You should use pattern matching (i.e. regular expressions - `grep` - or wildcard operators in SQL) for the filters on string data columns. **Do not print these tables in the submitted work**
+
+It may help debugging if you print the number of rows in the table after each step. You will be required to produce plots for parts **e** and **f**, but it may also help you to produce box-whisker plots at each step, using the selection column for each plot (i.e. `plot(UHighway ~ factor(VClass), data=vehicles.dat)` after part **a**)
+
+```{r}
+table_exe4<-read.csv("vehicles.csv")
+#table_exe4
+```
+
+### Part a.
+
+Select only rows with data for cars (not vans, etc.). Match `Cars` in the `VClass` column. This should remove ~17000 rows.
+
+```{r}
+#method1
+part_a<-grepl("Cars", table_exe4$VClass)
+result_a<-table_exe4[part_a,]
+#result_a
+
+
+#method2
+#part_a<-grep("Cars", table_exe4$VClass)
+#table_exe4[part_a,]
+
+# Row number
+nrow(result_a)
+
+par(las=2,cex.axis=0.75,mar=c(6,4,2,1))
+bp_a<-(boxplot(UHighway ~ factor(VClass), data=result_a, 
+               main=" UHighway vs VClass",
+              ylab="UHighway", xlab="", xaxt="n"))
+
+axis(1, at=seq(length(bp_a$names)),
+labels=bp_a$names,
+cex.axis=0.75,
+)
+title(xlab="VClass",line=5)
+
+
+
+```
+
+### Part b.
+
+Select only rows with data for regular or premium gasoline. You can match `Gasoline` in the `fuelType1` column and exclude rows with `Midgrade` in that column.
+
+```{r}
+part_b<-grepl("(Regular|Premium) Gasoline", result_a$fuelType1)
+
+#or
+#part_b<-grepl("Regular Gasoline|Premium Gasoline", result_a$fuelType1)
+
+result_b<-result_a[part_b,]
+#result_b
+
+# Row number
+nrow(result_b)
+
+par(mar=c(4,4,2,1))
+bp_b<-(boxplot(UHighway ~ factor(fuelType1), data=result_b, 
+               main=" UHighway vs fuelType1",
+               ylab="UHighway", xlab="fuelType1")) 
+
+
+```
+
+### Part c.
+
+Select for certain classes of transmissions. Match for the pattern `*-spd` in the `trany` column and exclude rows with `Doubled` in that column. There should be ~13000 rows remaining at this step.
+
+```{r}
+part_c1<-grepl("*-spd", result_b$trany)
+result_c1<-result_b[part_c1,]
+part_c<-grepl("Doubled$", result_c1$trany)
+result_c<-result_c1[!part_c,]
+#result_c
+
+# Row number
+nrow(result_c)
+
+par(las=2,cex.axis=0.75,mar=c(6,4,2,1))
+bp_c<-(boxplot(UHighway ~ factor(trany), data=result_c, 
+               main=" UHighway vs trany",
+               ylab="UHighway", xlab="", xaxt="n"))
+
+axis(1, at=seq(length(bp_c$names)),
+labels=bp_c$names,
+cex.axis=0.70
+)   
+title(xlab="trany", line=5)
+```
+
+### Part d.
+
+Select only rows with values of $4,6,8$ in the `cylinders` column.
+
+```{r}
+
+part_d<-grepl("(4|6|8)", result_c$cylinders)
+result_d<-result_c[part_d,]
+#result_d
+
+# Row number
+nrow(result_d)
+
+bp_d<-(boxplot(UHighway ~ factor(cylinders), data=result_d, 
+               main=" UHighway vs cylinders", 
+               ylab="UHighway", xlab="cylinders"))
+
+
+
+
+
+```
+
+
+### Part e.
+
+Select only rows with `year` before 2020. Produce a box-whisker plot of fuel efficiency (`UHighway`) with `year` as the independent variable. There should be <12500 rows remaining at this step.
+
+```{r}
+
+part_e<-grepl("(2020|2021)", result_d$year)
+result_e<-result_d[!part_e,]
+#result_e
+
+# Row number
+nrow(result_e)
+
+
+par(las=2,cex.axis=0.75,mar=c(5,4,3,1))
+bp_e<-(boxplot(UHighway ~ factor(year), data=result_e, 
+               main=" UHighway vs year",
+               ylab="UHighway", xlab="year", xaxt="n"))
+
+axis(1, at=seq(length(bp_e$names)),
+labels=bp_e$names,
+cex.axis=0.75
+)
+
+```
+
+### Part f.
+
+Tokenize the strings in the `trany` column into two substrings. The first will identify the type of transmission (`Manual` or `Automatic`) and the second will identify the number of gears (`3-spd`, `4-spd`), etc. Use first substring for each row to create new string data column `Transmission`, with values `Manual` or `Automatic`. Tokenize the second substring and convert the integer characters to integer values; add this as a new numeric data column `Gears`.
+
+Produce two box-whisker plot of fuel efficiency (`UHighway`) as the dependent variable, with `Transmission` and `Gears` as the independent variables.
+
+```{r}
+#result_e$trany
+result_f<-result_e
+
+st1<-strsplit(result_f$trany," ")
+result_f$Transmission<-unlist(lapply(st1,`[`,1))
+result_f$Gear<-unlist(lapply(st1,`[`,2))
+result_f$trany=NULL
+
+st2<-strsplit(result_f$Gear,"-")
+result_f$Gear<-unlist(lapply(st2,`[`,1))
+result_f$Gear<-as.integer(result_f$Gear)
+
+result_f<-result_f[c(1,2,3,4,5,6,7,8,9,10,15,16,11,12,13,14)]
+#result_f
+
+bp_f1<-(boxplot(UHighway ~ factor(Transmission), data=result_f, 
+                main=" UHighway vs Transmission",
+                xlab="Transmission", ylab="UHighway"))
+
+bp_f2<-(boxplot(UHighway ~ factor(Gear), data=result_f, 
+                main=" UHighway vs Gear", 
+                xlab="Gear", ylab="UHighway"))
+
+```
+
+

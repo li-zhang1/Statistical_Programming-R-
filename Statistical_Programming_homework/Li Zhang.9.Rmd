@@ -1,0 +1,415 @@
+---
+title: "9 Additional Graphs Homework"
+author: "Li Zhang"
+date: "07/27/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+For this exercise, you may use whatever graphics library you desire.
+
+# Exercise 1.
+
+Load the `ncaa2018.csv` data set and create histograms, QQ-norm and box-whisker plots for `ELO`. Add a title to each plot, identifying the data.
+
+```{r}
+exe1_table<-read.csv("ncaa2018.csv")
+ELO=exe1_table$ELO
+hist(ELO,main="Histogram for ELO")
+boxplot(ELO,range=2.0, main="Box-whisker for ELO")
+qqnorm(ELO, main="Normal Q-Q plot for ELO")
+qqline(ELO, col=2, lwd=2, lty=2)
+
+```
+
+
+# Exercise 2.
+
+Review Exercise 1, Homework 6, where you calculated skewness and kurtosis. The reference for this exercise, https://www.itl.nist.gov/div898/handbook/eda/section3/eda35b.htm, 
+
+> The following example shows histograms for 10,000 random numbers generated from a normal, a double exponential, a Cauchy, and a Weibull distribution.
+
+We will reproduce the histograms for these samples, and add qqnorm and box-whisker plots.
+
+## Part a
+
+Use the code below from lecture to draw 10000 samples from the normal distribution.
+
+```{r}
+norm.sample <- rnorm(10000, mean=0, sd=1)
+
+```
+
+
+Look up the corresponding `r*` functions in R for the Cauchy distribution (use location=0, scale=1), and the Weibull distribution (use shape = 1.5). For the double exponential, use you can use the `*laplace` functions from the `rmutil` library, or you can use `rexp(10000) - rexp(10000)`
+
+Draw 10000 samples from each of these distributions. Calculate skewness and kurtosis for each sample. You may use your own function, or use the `moments` library.
+
+```{r}
+
+#Draw 10000 samples from the Cauchy distribution.
+cauchy.sample<-rcauchy(n=10000, location = 0, scale = 1)
+
+
+#Draw 10000 samples from the Weibull distribution.
+Weibull.sample<-rweibull(n=10000, shape=1.5)
+
+#Draw 10000 samples from the double exponential distribution.
+#double exponential distribution is referred to as the Laplace distribution.
+
+#Method1
+#library(rmutil)
+#laplace.sample<-rlaplace(n=10000)
+
+#method2
+double_exp.sample<-rexp(10000) - rexp(10000)
+
+
+#Function to compute skewness and kurtosis for each sample.
+compute.result<-function(data){
+
+ sum.data<-0
+ n<-0
+ for(i in 1: length(data)){
+   if(!is.na(data[i])){
+     sum.data<-sum.data+data[i]
+     n<-n+1
+   }
+ }
+mean.data<-sum.data/n
+
+SS <- 0
+n<-0
+SS_skewness<-0
+SS_kurtosis<-0
+for(i in 1:length(data)) {
+  if(!is.na(data[i])) {
+    SS <- SS+(data[i]-mean.data)^2
+    SS_skewness <- SS_skewness+(data[i]-mean.data)^3
+    SS_kurtosis <- SS_kurtosis+(data[i]-mean.data)^4
+    n <- n+1
+  }
+}
+
+sd<-sqrt(SS/(n-1))
+sd1<-sqrt(SS/n)
+g1<-(SS_skewness/n)/(sd1^3)
+kurtosis<-(SS_kurtosis/n)/(sd1^4)
+list(Skewness=g1, Kurtosis=kurtosis )
+}
+
+compute.result(norm.sample)
+
+compute.result(cauchy.sample)
+
+compute.result(Weibull.sample)
+
+compute.result(double_exp.sample)
+
+```
+
+```{r,eval=TRUE}
+
+#use moment library to test the results
+library(moments)
+test.data1<-function(data_table){
+  m<-mean(data_table)
+  s<-sd(data_table)
+  sk<-skewness(data_table)
+  k<-kurtosis(data_table)
+  list(Skewness=sk, Kurtosis=k )
+}
+
+
+test.data1(norm.sample)
+
+test.data1(cauchy.sample)
+
+test.data1(Weibull.sample)
+
+test.data1(double_exp.sample)
+
+
+```
+## Part b
+
+Plot the histograms for each distribution. Use `par(mfrow=c(2,2))` in your code chunk to combine the four histogram in a single plot. Add titles to the histograms indicating the distribution. Set the x-axis label to show the calculated skewness and kurtosis, i.e. `skewness = ####, kurtosis = ####`
+
+```{r}
+
+par(mfrow=c(2,2))
+
+#Normal distribution
+norm.skewness=round(compute.result(norm.sample)$Skewness,4)
+norm.kurtosis=round(compute.result(norm.sample)$Kurtosis,4)
+hist(norm.sample, main="Normal Distribution",xlab=c(paste("skewness=", norm.skewness), paste("kurtosis=",norm.kurtosis)))
+
+#Cauchy distribution
+cauchy.skewness=round(compute.result(cauchy.sample)$Skewness,4)
+cauchy.kurtosis=round(compute.result(cauchy.sample)$Kurtosis,4)
+hist(cauchy.sample, main="Cauchy Distribution", xlab=c(paste("skewness=", cauchy.skewness), paste("kurtosis=",cauchy.kurtosis)))
+
+#Weibull Distribution
+Weibull.skewness=round(compute.result(Weibull.sample)$Skewness,4)
+Weibull.kurtosis=round(compute.result(Weibull.sample)$Kurtosis,4)
+hist(Weibull.sample, main="Weibull Distribution", xlab=c(paste("skewness=", Weibull.skewness), paste("kurtosis=",Weibull.kurtosis)))
+
+#Double Exponential Distribution
+double_exp.skewness=round(compute.result(double_exp.sample)$Skewness,4)
+double_exp.kurtosis=round(compute.result(double_exp.sample)$Kurtosis,4)
+hist(double_exp.sample,main="Double Exponential Distribution", xlab=c(paste("skewness=", double_exp.skewness), paste("kurtosis=",double_exp.kurtosis)))
+```
+
+## Part c
+Repeat Part b, but with QQ-norm plots.
+
+```{r}
+
+par(mfrow=c(2,2))
+
+#Normal distribution
+qqnorm(norm.sample, main="Normal Distribution",xlab=c(paste("skewness=", norm.skewness), paste("kurtosis=",norm.kurtosis)))
+
+#Cauchy distribution
+qqnorm(cauchy.sample, main="Cauchy Distribution", xlab=c(paste("skewness=", cauchy.skewness), paste("kurtosis=",cauchy.kurtosis)))
+
+#Weibull Distribution
+qqnorm(Weibull.sample, main="Weibull Distribution", xlab=c(paste("skewness=", Weibull.skewness), paste("kurtosis=",Weibull.kurtosis)))
+
+#Double Exponential Distribution
+qqnorm(double_exp.sample,main="Double Exponential Distribution", xlab=c(paste("skewness=", double_exp.skewness), paste("kurtosis=",double_exp.kurtosis)))
+
+```
+
+
+## Part d
+
+Repeat Part b, but with box-whisker plots.
+
+```{r}
+
+par(mfrow=c(2,2))
+
+#Normal distribution
+boxplot(norm.sample, main="Normal Distribution",xlab=c(paste("skewness=", norm.skewness), paste("kurtosis=",norm.kurtosis)))
+
+#Cauchy distribution
+boxplot(cauchy.sample, main="Cauchy Distribution", xlab=c(paste("skewness=", cauchy.skewness), paste("kurtosis=",cauchy.kurtosis)))
+
+#Weibull Distribution
+boxplot(Weibull.sample, main="Weibull Distribution", xlab=c(paste("skewness=", Weibull.skewness), paste("kurtosis=",Weibull.kurtosis)))
+
+#Double Exponential Distribution
+boxplot(double_exp.sample,main="Double Exponential Distribution", xlab=c(paste("skewness=", double_exp.skewness), paste("kurtosis=",double_exp.kurtosis)))
+
+
+```
+
+
+Hints for SAS. If you create the samples in IML, use 
+```
+Normal = j(1, 10000, .);
+call randgen(Normal, "NORMAL", 0, `);
+```
+
+You can generate samples in the data step using
+```
+do i = 1 to 10000;
+  Normal = rand('NORMAL',0,1);
+  output;
+end;
+```
+
+RAND doesn't provide a Laplace option, but you can create samples from this distribution by
+```
+rand('EXPONENTIAL')-rand('EXPONENTIAL');
+```
+
+To group multiple plots, use
+```
+ods graphics / width=8cm height=8cm;
+ods layout gridded columns=2;
+ods region;
+ ... first plot
+
+ods region;
+ ... second plot
+
+ods layout end;
+```
+
+You might need to include
+```
+ods graphics off;
+
+ods graphics on;
+ODS GRAPHICS / reset=All;
+```
+to return the SAS graphics output to normal.
+
+## Exercise 3.
+
+We will create a series of graphs illustrating how the Poisson distribution approaches the normal distribution with large $\lambda$. We will iterate over a sequence of `lambda`, from 2 to 64, doubling `lambda` each time. For each `lambda` draw 1000 samples from the Poisson distribution. 
+
+Calculate the skewness of each set of samples, and produce  histograms, QQ-norm and box-whisker plots. You can use `par(mfrow=c(1,3))` to display all three for one `lambda` in one line. Add `lambda=##` to the title of the histogram, and `skewness=##` to the title of the box-whisker plot.
+```{r}
+
+#set.seed(5)
+
+poisson.sample = matrix(numeric(1000*6) ,nrow=1000,ncol=6)
+lambda<-c(2,4,8,16,32,64)
+for (i in 1:6){
+  poisson.sample[,i]<-rpois(1000, lambda[i])
+  
+}
+
+poisson.skewness = matrix(numeric(1*6) ,nrow=1,ncol=6)
+for (i in 1:6){
+  poisson.skewness[,i]=round(compute.result(poisson.sample[,i])$Skewness,4)
+  print(poisson.skewness[,i])
+  par(mfrow=c(1,3))
+  hist(poisson.sample[,i], main=paste("lambda=", lambda[i]))
+  qqnorm(poisson.sample[,i])
+  qqline(poisson.sample[,i], col=2, lwd=2, lty=2)
+  boxplot(poisson.sample[,i], main=paste("skewness=", poisson.skewness[,i]))
+  
+}
+
+
+```
+
+## Part b. 
+Remember that `lambda` represents the mean of a discrete (counting) variable. At what size mean is Poisson data no longer skewed, relative to normally distributed data? You might run this 2 or 3 times, with different seeds; this number varies in my experience.
+
+```{r,fig.width=12}
+
+par(mfrow=c(1,3))
+
+#After running 2 or 3 times with different seeds, 
+#I found that overall, lambda 2, 4, 8 has 
+#the larger skewness than lambda 16, 32, 64.
+#--lambda 16, 32, 64 are less skewed than the lambda 2,4,8. 
+#--sometimes lambda 32 is close to normal.
+#--while sometimes lambda 64 is close to normal.
+
+# when I set set.seed(5),
+# the skewness of lambda 64 is less than 
+# the skewness of lambda 32.
+#--Based on Histogram: I can tell lambda 64 is close to normal.
+#--Based on Normal Q-Q plot, 
+# random numbers generated from lambda 64 more tend to fall on the line.
+#--Based on Boxplot, both of them have outlier.
+# overall, I would conclude lambda 64 is close to normal.
+
+# when I set set.seed(123), 
+# the skewness of lambda 32 is less than 
+# the skewness of lambda 64. 
+#--Based on Histogram: it's hard to tell which one is close to normal.
+#--Based on Normal Q-Q plot, 
+# random numbers generated from lambda 32 more tend to fall on the line.
+#--Based on Boxplot, both of them have outlier.
+# overall, I would conclude lambda 32 is close to normal. 
+# lambda 64 is not bad.
+
+#I would conclude lambda 32 would be enough
+#to let the skewness of the Poisson distribution small enough 
+#to be considered normal.
+
+
+
+```
+
+If you do this in SAS, create a data table with data columns each representing a different $\mu$. You can see combined histogram, box-whisker and QQ-norm, for all columns, by calling
+
+```
+proc univariate data=Distributions plot;
+run;
+```
+
+At what $\mu$ is skewness of the Poisson distribution small enough to be considered normal?
+
+
+
+# Exercise 4
+
+## Part a
+Write a function that accepts a vector `vec`, a vector of integers, a main axis label and an x axis label. This function should 
+1. iterate over each element $i$ in the vector of integers 
+2. produce a histogram for `vec` setting the number of bins in the histogram to $i$
+3. label main and x-axis with the specified parameters. 
+4. label the y-axis to read `Frequency, bins =` and the number of bins.
+
+Hint:
+You can simplify this function by using the parameter `...` - see `?plot` or ?`hist`
+```{r}
+
+plot.histograms<-function(vec, vec_interger, main_label, x_label){
+  
+  for (i in 1:length(vec_interger)){
+    hist(vec, breaks=vec_interger[i], 
+        main=main_label,
+        xlab=x_label,
+        ylab=paste("Frenquency, bin=", vec_interger[i]),
+        )
+    
+  }
+}  
+
+#make the number of bins exactly equal to the i. 
+#breaks=seq(min(vec), max(vec), length.out=vec_interger[i]+1)
+
+
+```
+
+## Part b
+Test your function with the `hidalgo` data set (see below), using bin numbers 12, 36, and 60. To plot three different histograms of the `hidalgo` data set. You should be able to call your function with something like
+
+```{r}
+
+hidalgo.dat<-read.delim("hidalgo.dat")
+
+plot.histograms(hidalgo.dat[,1],c(12,36,60), main_label="1872 Hidalgo issue",x_label= "Thickness (mm)")
+
+```
+
+
+
+If you do this in SAS, write a macro that accepts a table name, a column name, a list of integers, a main axis label and an x axis label. This macro should scan over each element in the list of integers and produce a histogram for each integer value, setting the bin count to the element in the input list, and labeling main and x-axis with the specified parameters. You should label the y-axis to read `Frequency, bins =` and the number of bins.
+
+Test your macro with the `hidalgo` data set (see below), using bin numbers 12, 36, and 60. You should be able to call your macro with something like
+```
+%plot_histograms(hidalgo, y, 12 36 60, main="1872 Hidalgo issue", xlabel="Thickness (mm)");
+```
+to plot three different histograms of the `hidalgo` data set.
+
+Hint:
+Assume `12 36 60` resolve to a single macro parameter and use `%scan`. Your macro definition can look something like
+```
+%macro plot_histograms(table_name, column_name, number_of_bins, main="Main", xlabel="X Label")
+```
+
+## Data
+The `hidalgo` data set is in the file `hidalgo.dat` These data consist of paper thickness measurements of stamps from the 1872 Hidalgo issue of Mexico. This data set is commonly used to illustrate methods of determining the number of components in a mixture (in this case, different batches of paper). See https://www.jstor.org/stable/2290118,  
+https://books.google.com/books?id=1CuznRORa3EC&lpg=PA95&pg=PA94#v=onepage&q&f=false and https://books.google.com/books?id=c2_fAox0DQoC&pg=PA180&lpg=PA180&f=false
+.
+
+Some analysis suggest there are three different mixtures of paper used to produce the 1872 Hidalgo issue; other analysis suggest seven. Why do you think there might be disagreement about the number of mixtures?
+```{r}
+
+#PMC: Changing the number of bins will generate the different interpretation of the data. 
+#If there are too many bins, then the data distribution will look rough,
+#and it will be difficult to discern the signal from the noise.
+#If there are too few bins, the histogram will lack the details needed to 
+#discern any useful pattern from the data.
+
+#The reason that there might be disagreement about the number of mixture 
+#is that they use the different number of bins to plot the histogram. 
+#if the number of bin is 12, the analysis will probably suggest that there are three different mixture of paper. 
+#If the number of bin is larger, for example it's 36, 
+#then the analysis would suggest that 
+#there are seven different mixtures of paper.
+```
+
+

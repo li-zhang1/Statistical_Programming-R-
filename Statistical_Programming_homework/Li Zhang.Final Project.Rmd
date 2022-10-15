@@ -1,0 +1,920 @@
+---
+title: "Final Project"
+author: "Li Zhang"
+date: "08/04/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+
+### Project Overview--description of the problem.
+
+This project is to take six existing data files to create the final data frame that is able to be analyzed. We would like to find if there are any relationships between the Yield and Applied Rate, Yield and Yield, Applied Rate and Applied Rate for the specified year.
+
+
+#### Mission one
+
+Read data files => Create a grid => Aggregate the data => Merge the data=>Get final data frame => Visualize the merged data frame(pair plot and DAG).
+
+#### Mission two
+
+Normalize the data (choose Option 1. Rank) 
+
+**(1) Rank before aggregating** 
+
+Rank the data => aggregate the data => merge the data files => Get final normalized data frame =>Visualize the merged normalized data frame(pair plot and DAG)
+
+**(2) Aggregate before ranking**
+
+Aggregate the data => rank the data => Merge the data files => Get final normalized data frame =>Visualize the merged normalized data frame(pair plot and DAG)
+
+### Data Description.
+
+There are six data files:
+
+(1) A 2017 Soybean Harvest.csv
+
+(2) A 2018 Corn Harvest.csv
+
+(3) A 2018 Corn Seeding.csv
+
+(4) A 2019 Soybeans Harvest.csv
+
+(5) A 2020 Corn Harvest.csv
+
+(6) A 2020 Corn Seeding.csv
+
+*Harvest.csv files include: Longitude, Latitude, Yield, IsoTime, etc.
+
+ *Seeding.csv files include: Longitude, Latitude, AppliedRate, IsoTime, etc.
+Data are not measured at the same scale:
+
+Seeding rate is measured in tens of thousands seeds per acre.(count data)
+
+Yield is measured in hundreds of bushels per acre.(volume)
+
+we need to normalize the data to make them have the same scale at step 6 "Normalize the data".
+
+
+
+### Algorithm.
+
+*1. Read six data files which are listed above.*
+
+*2. Create a grid.*
+
+*3. Aggregate the data.*
+
+*4. Merge the data and get the final merged data frame.*
+
+*5. Visualize the final data frame.*
+
+*6. Normalize the data (Pair plot and DAG) and visualize the final normalized data frame.*
+
+1. way1-Rank before aggregating 
+
+2. way2-Aggregate before ranking
+
+*7. Compare pairs plots of three final merged data frames*
+
+1. Original Data
+
+2. Rank normalized data(Rank before aggregating)
+
+3. Rank normalized data(Aggregate before ranking)
+
+*8. Compare Directed Acyclic Graph of three final merged data frames*
+
+1. Original Data
+
+2. Rank normalized data(Rank before aggregating)
+
+3. Rank normalized data(Aggregate before ranking)
+
+*9. Draw a conclusion*
+
+
+
+
+
+### Step 1 
+
+
+**1. Read all the six data files.**
+
+**2. Check if they are read correctly.**
+
+**3. check skewness or Kurtosis.**
+
+```{r}
+# Read six data files.
+read.Y17<-read.csv("A 2017 Soybeans Harvest.csv")
+read.AR18<-read.csv("A 2018 Corn Seeding.csv")
+read.Y18<-read.csv("A 2018 Corn Harvest.csv")
+read.Y19<-read.csv("A 2019 Soybeans Harvest.csv")
+read.AR20<-read.csv("A 2020 Corn Seeding.csv")
+read.Y20<-read.csv("A 2020 Corn Harvest.csv")
+
+
+#check if all the data files that I read is correct.(should look like the field map.)
+plot(Latitude ~ Longitude, data=read.Y17, pch=".", main="2017 Soybeans Harvest")
+plot(Latitude ~ Longitude, data=read.AR18, pch=".",main="2018 Corn Seeding")
+plot(Latitude ~ Longitude, data=read.Y18, pch=".",main="2018 Corn Harvest")
+plot(Latitude ~ Longitude, data=read.Y19, pch=".",main="2019 Soybeans Harvest")
+plot(Latitude ~ Longitude, data=read.AR20, pch=".",main="2020 Corn Seeding")
+plot(Latitude ~ Longitude, data=read.Y20, pch=".",main="2020 Corn Harvest")
+
+
+#Check data skewness and kurtosis.
+library(moments)
+check_skewness_kurtosis<-function(data,name){
+  par(mfrow=c(1,3))
+  check.skewness<-round(skewness(data),4)
+  check.kurtosis<-round(kurtosis(data),4)
+ hist(data, main=name,xlab=c(paste("skewness=", check.skewness), paste("kurtosis=",check.kurtosis)))
+qqnorm(data, main=name,xlab=c(paste("skewness=", check.skewness), paste("kurtosis=",check.kurtosis)))
+boxplot(data, main=name,xlab=c(paste("skewness=", check.skewness), paste("kurtosis=",check.kurtosis)))
+}
+check_skewness_kurtosis(read.Y17$Yield,"2017 Soybeans Harvest")
+check_skewness_kurtosis(read.AR18$AppliedRate,"2018 Corn Seeding")
+check_skewness_kurtosis(read.Y18$Yield,"2018 Corn Harvest")
+check_skewness_kurtosis(read.Y19$Yield,"2019 Soybeans Harvest")
+check_skewness_kurtosis(read.AR20$AppliedRate,"2020 Corn Seeding")
+check_skewness_kurtosis(read.Y20$Yield,"2020 Corn Harvest")
+# As we can see, these data are not mormal distributed.
+
+
+
+```
+### Step 2 Create a grid.
+
+Summarize the data by first creating a set of 50m by 50m grid cells.
+
+```{r}
+#Create a grid
+Create_grid<-function(data_table){
+  # using abline to create grid.
+  plot(Latitude ~ Longitude, data=data_table, pch=".")
+  abline(h=1:12*50, v=1:20*50, col="red")
+}
+Create_grid(read.Y17)
+Create_grid(read.AR18)
+Create_grid(read.Y18)
+Create_grid(read.Y19)
+Create_grid(read.AR20)
+Create_grid(read.Y20)
+
+```
+
+
+
+
+### Step 3 Aggregate the data.
+
+*1. create a Row variable by dividing Latitude by 50 with ceiling function.*
+
+*2. Create a Column variable by dividing Longitude by 50 with ceiling function.*
+
+*3. Give the unique identifier for each grid cell: Cell<-Row x 1000 + Column*
+
+*4. Take every data point that falls within one of the grid cells, average(mean) all of the points within that cell. also get the number of observations(length) for each grid cell, this is because we only want to merge the aggregate cells that have at least 30 observations.*
+
+*5.Get the data frame that has Rows and Columns with associated mean and number of observations*
+```{r}
+## Function to aggregate the Harvest data 
+Aggregate_Y.data<-function(data){
+  
+  # create Row variables and Column variables.
+  data$Row<-ceiling(data$Latitude/50)
+  data$Column<-ceiling(data$Longitude/50)
+  
+  # give the unique identifier for each cell.
+  data$Cell<-data$Row*1000+data$Column
+  
+  #Average all the data points within each unique cell.
+  table1<-aggregate(Yield~Row+Column+Cell, data=data, mean)
+  names(table1)<-c("Row", "Column", "Cell", "Mean")
+  #print(table1)
+  
+  #Get observations of each unique cell.
+  table2<-aggregate(Yield~Row+Column+Cell,data=data, length)
+  names(table2)<-c("Row", "Column", "Cell", "Observation")
+  #print(table2)
+  
+  #Get the data frame that has Rows and Columns associated with mean and  
+  #observations
+  aggregate.result<-merge(table1,table2)
+  aggregate.result<-aggregate.result[c(3,1,2,4,5)]
+  #print(aggregate.result)
+  
+  #Get the data frame that has observation >=30
+  aggregate.result<-subset( aggregate.result, aggregate.result$Observation>=30 )
+  #print(aggregate.result)
+  
+  ##check if observation is at least 30.
+  # par(las=2,cex.axis=0.75,mar=c(6,4,2,1))
+  # bp_c<-(boxplot(Row ~ Observation, data=aggregate.result, 
+  #              main=" Row vs Observation",
+  #              ylab="Row", xlab="", xaxt="n"))
+  # 
+  # axis(1, at=seq(length(bp_c$names)),
+  # labels=bp_c$names,
+  # cex.axis=0.70
+  # )   
+  # title(xlab="Observation", line=5)
+  
+  #Plot the final result.
+  plot(Row ~ Column, data= aggregate.result)
+  abline(h=1:12+0.5, v=1:20+0.5, col="red")
+
+  return (aggregate.result)
+}
+
+
+## Funtion to aggregate the Seeding Rate data 
+Aggregate_AR.data<-function(data){
+  
+  # create Row variables and Column variables.
+  data$Row<-ceiling(data$Latitude/50)
+  data$Column<-ceiling(data$Longitude/50)
+  # give the unique identifier for each cell.
+  data$Cell<-data$Row*1000+data$Column
+  table1<-aggregate(AppliedRate~Row+Column+Cell, data=data, mean)
+  names(table1)<-c("Row", "Column", "Cell", "Mean")
+  #print(table1)
+  table2<-aggregate(AppliedRate~Row+Column+Cell,data=data, length)
+  names(table2)<-c("Row", "Column", "Cell", "Observation")
+  #print(table2)
+  aggregate.result<-merge(table1,table2)
+  aggregate.result<-aggregate.result[c(3,1,2,4,5)]
+  #print(aggregate.result)
+  
+  # Observation is at least 30
+  aggregate.result<-subset( aggregate.result, aggregate.result$Observation>=30 )
+  #print(aggregate.result)
+  
+  ##check if observation is at least 30.
+  # par(las=2,cex.axis=0.75,mar=c(6,4,2,1))
+  # bp_c<-(boxplot(Row ~ Observation, data=aggregate.result, 
+  #              main=" Row vs Observation",
+  #              ylab="Row", xlab="", xaxt="n"))
+  # 
+  # axis(1, at=seq(length(bp_c$names)),
+  # labels=bp_c$names,
+  # cex.axis=0.70
+  # )   
+  # title(xlab="Observation", line=5)
+
+  
+  plot(Row ~ Column, data= aggregate.result)
+  abline(h=1:12+0.5, v=1:20+0.5, col="red")
+  
+  return (aggregate.result)
+}
+
+#2017 Soybeans Harvest
+Y17=Aggregate_Y.data(read.Y17)
+#Y17
+
+#2018 Corn Seeding
+AR18=Aggregate_AR.data(read.AR18)
+#AR18
+
+#2018 Corn Harvest
+Y18=Aggregate_Y.data(read.Y18)
+#Y18
+
+#2019 Soybeans Harvest
+Y19=Aggregate_Y.data(read.Y19)
+#Y19
+
+#2020 Corn Seeding
+AR20=Aggregate_AR.data(read.AR20)
+#AR20
+
+#2020 Corn Harvest
+Y20=Aggregate_Y.data(read.Y20)
+#Y20
+
+```
+
+
+
+### Step 4 Merge the data.
+
+Combine the individual aggregate data sets into a single data frame. The rows from each table should be merged by Cell. 
+```{r}
+
+#Function to extract Column Cell and Mean for each Aggregated file.
+merge_data<-function(data,name){
+ data_cell_mean<-data.frame(data$Cell, data$Mean)
+ colnames(data_cell_mean)<-c("Cell",name)
+ return (data_cell_mean)
+}
+
+
+#2017 Soybeans Harvest
+Y17_cell_mean=merge_data(Y17,"Y17")
+#Y17_cell_mean
+
+#2018 Corn Seeding
+AR18_cell_mean=merge_data(AR18,"AR18")
+#AR18_cell_mean
+
+
+#2018 Corn Harvest
+Y18_cell_mean=merge_data(Y18,"Y18")
+#Y18_cell_mean
+
+
+#2019 Soybeans Harvest
+Y19_cell_mean=merge_data(Y19,"Y19")
+#Y19_cell_mean
+
+
+#2020 Corn Seeding
+AR20_cell_mean=merge_data(AR20,"AR20")
+#AR20_cell_mean
+
+
+#2020 Corn Harvest
+Y20_cell_mean=merge_data(Y20,"Y20")
+#Y20_cell_mean
+
+
+
+#Merge all the extracted data to get the final merged data frame named Combined.dat.
+Combined.dat<-Reduce(merge, list(Y17_cell_mean,AR18_cell_mean,Y18_cell_mean,Y19_cell_mean, AR20_cell_mean,Y20_cell_mean))
+
+
+Combined.dat
+
+```
+
+
+
+### Step 5 Visualize the merged data frame.
+
+**1. Use pairs plot to visualize the relationship**
+
+**2. Use DAG to visualize the relationship.**
+
+```{r}
+#Create a Pairs plot.
+pairs(Combined.dat, col='black')
+library(bnlearn)
+# install.packages("BiocManager")
+# BiocManager::install("Rgraphviz")
+
+#Create directed acyclic graph(DAG).
+
+modela.dag<-model2network("[Y17][AR18|Y17][Y18|AR18:Y17]")
+fit1=bn.fit(modela.dag, Combined.dat[,c('Y17', 'AR18','Y18')])
+#fit1
+strengtha<-arc.strength(modela.dag,Combined.dat[, c('Y17','AR18','Y18')]) 
+strength.plot(modela.dag, strengtha)
+
+
+modelb.dag<-model2network("[Y19][AR20|Y19][Y20|AR20:Y19]")
+fit2=bn.fit(modelb.dag, Combined.dat[ , c('Y19','AR20','Y20')])
+#fit2
+strengthb<-arc.strength(modelb.dag, Combined.dat[, c('Y19','AR20','Y20')])
+strength.plot(modelb.dag, strengthb)
+
+
+model1.dag<-model2network("[Y17][AR18|Y17][Y18|AR18:Y17][Y19|Y17:AR18:Y18][AR20|Y19][Y20|AR20:Y19]")
+strength1<-arc.strength(model1.dag,Combined.dat[, c('Y17','AR18','Y18','Y19','AR20','Y20')])
+strength.plot(model1.dag, strength1,main="Original Data")
+
+
+
+
+```
+
+
+## Step 6 Normalize the data and visualize the final normalized data frame.
+
+Since data are not measured at the same scale:
+seeding rate is measured in tens of thousands seeds per acre.(count data)
+yield rate is measured in hundreds of bushels per acre.(volumn)
+We should adjust the observations to a common scale.
+Different data normalization methods will affect the analysis.
+There are three options to normalize the data (choose one of them):
+
+### Option 1. Rank (non-parametric analysis).
+
+Replace $y_{ij}$ with $r_{j} = \text{rank}(y_{ij})$. Determine ranks independently for $j = 1, \dots, N_{j}$ for years {2017,2018,2019, 2020}.
+
+#### Option I choose.
+
+Rank Normalization.
+
+#### Specific definition of Rank Normalization.
+
+Rank Normalization allows comparison of datasets that were created on different scales. Rank Normalization replaces measurements with their rank with each sample, and allow the user to normalize, or scale, those ranks to facilitate comparison with other datasets.
+
+**1. Ranking the dataset**
+
+In the ranking step, each data point is replaced by its rank within its column. That is, for a dataset with $N$ rows, the data points will be replaced by values ranging from $1$(lowest) to $N$(Highest).Each value corresponds to the rank of the data point within that column.
+
+**2.Scaling the dataset**
+
+The maximum value of values in a column is determined by the scale to value parameter. For Scale to value of $V$ and dataset containing $N$ rows, the final results will therefore range from $V/N$ to $V$: 
+
+the formula would be 
+$$
+\frac{rank(data)}{max(rank(data))}
+$$
+
+#### The reason I choose Rank Normalization.
+
+The reason that I choose Rank Normalization method instead of z-score and Percent is that this option doesn't rely on Normal distribution. we make no assumptions about parameters associated with data. 
+We can choose z-score(parametric analysis) and use the parameter estimates for mean and standard deviation in our analysis if we can assume that the data are normally distributed. In this way, we might need to check for skewness or kurtosis. After checking skewness and kurtosis at step 1, I can conclude that the data are not normally distributed. If we still use option 2 z-score or option 3 percent, the result would be wrong.
+
+
+### Option 2. Z-score (parametric analysis).
+
+Calculate 
+$$
+{\overline{y}_{.j}}=\frac{\sum_{i=1}^{N_{i}}y_{ij}}{N_{i}}
+$$
+
+and 
+
+$$
+{s^2_{.j}}=\frac{\sum_{i=1}^{N_{i}}(y_{ij}-\overline{y}_{.j})^2}{N_{i}-1}
+$$
+
+where $N_{i}$ are the number of Yield values for year $j$. Replace $y_{ij}$ with
+
+$$
+z_{ij}=\frac{y_{ij}-\overline{y}_{.j}}{s_{.j}}
+$$
+
+calculate$\overline{y}_{.j}$ and $s^2_{.j}$ independently for $j=1,2,...,N_{j}$ for each original data column. Note that this method makes use of the first(mean) and second moments(variance). It would be best practice to check for skewness and kurtosis of there data.
+
+
+### Option 3. Percent.
+
+Replace $y_{ij}$ with 
+
+$$
+100 * \frac{y_{ij}}{\overline{y}_{.j}}
+$$
+
+Calculate $\overline{y}_{.j}$ independently for $y=1,2,..., N_{j}$ for each original data column. Note that this method assume the arithmetic mean is a reasonable estimate of central tendency. It would be best practice to check for skewness or kurtosis of these data.
+
+
+
+#### Part a: Rank the data before aggregating
+```{r}
+#Take every observation and 
+#(1)rank the data before aggregating it. 
+#(2)aggregating the data before ranking it.
+
+#I will implement both (1) and (2) and compare it.
+
+##(1)Rank before aggregating
+
+#Read the data.
+read.Y17<-read.csv("A 2017 Soybeans Harvest.csv")
+read.AR18<-read.csv("A 2018 Corn Seeding.csv")
+read.Y18<-read.csv("A 2018 Corn Harvest.csv")
+read.Y19<-read.csv("A 2019 Soybeans Harvest.csv")
+read.AR20<-read.csv("A 2020 Corn Seeding.csv")
+read.Y20<-read.csv("A 2020 Corn Harvest.csv")
+
+###Function to take every observation and rank it.
+
+
+#Harvest data
+rank_Y_data<-function(data){
+  data$rank_ratio=rank(data$Yield)/max(rank(data$Yield))
+  return (data)
+}
+
+#seeding rate
+rank_AR_data<-function(data){
+  data$rank_ratio=rank(data$AppliedRate)/max(rank(data$AppliedRate))
+  return (data)
+}
+
+#2017 Soybeans Harvest
+read.Y17_normal=rank_Y_data(read.Y17)
+#read_normal.Y17_normal
+
+#2018 Corn Seeding
+read.AR18_normal=rank_AR_data(read.AR18)
+#read_normal.AR18_normal
+
+
+#2018 Corn Harvest
+read.Y18_normal=rank_Y_data(read.Y18)
+#read.Y18_normal
+
+
+#2019 Soybeans Harvest
+read.Y19_normal=rank_Y_data(read.Y19)
+#read.Y19
+
+
+#2020 Corn Seeding
+read.AR20_normal=rank_AR_data(read.AR20)
+#read.AR20_normal
+
+
+
+#2020 Corn Harvest
+read.Y20_normal=rank_Y_data(read.Y20)
+#read.Y20_normal
+
+
+##Aggregate the data.
+
+Aggregate_normal.data<-function(data){
+  
+  # create Row variables and Column variables.
+  data$Row<-ceiling(data$Latitude/50)
+  data$Column<-ceiling(data$Longitude/50)
+  
+  # give the unique identifier for each cell.
+  data$Cell<-data$Row*1000+data$Column
+  
+  #Average all the data points within each unique cell.
+  table1<-aggregate(rank_ratio~Row+Column+Cell, data=data, mean)
+  names(table1)<-c("Row", "Column", "Cell", "Mean")
+  #print(table1)
+  
+  #Get observations of each unique cell.
+  table2<-aggregate(rank_ratio~Row+Column+Cell,data=data, length)
+  names(table2)<-c("Row", "Column", "Cell", "Observation")
+  #print(table2)
+  
+  #Get the data frame that has Rows and Columns associated with mean and  
+  #observations
+  aggregate.result<-merge(table1,table2)
+  aggregate.result<-aggregate.result[c(3,1,2,4,5)]
+  #print(aggregate.result)
+  
+  #Get the data frame that has observation >=30
+  aggregate.result<-subset( aggregate.result, aggregate.result$Observation>=30 )
+  #print(aggregate.result)
+  
+  ##check if observation is at least 30.
+  # par(las=2,cex.axis=0.75,mar=c(6,4,2,1))
+  # bp_c<-(boxplot(Row ~ Observation, data=aggregate.result, 
+  #              main=" Row vs Observation",
+  #              ylab="Row", xlab="", xaxt="n"))
+  # 
+  # axis(1, at=seq(length(bp_c$names)),
+  # labels=bp_c$names,
+  # cex.axis=0.70
+  # )   
+  # title(xlab="Observation", line=5)
+  
+  #Plot the final result.
+  plot(Row ~ Column, data= aggregate.result)
+  abline(h=1:12+0.5, v=1:20+0.5, col="red")
+
+  return (aggregate.result)
+}
+
+
+#2017 Soybeans Harvest
+Y17_normal=Aggregate_normal.data(read.Y17_normal)
+#Y17
+
+#2018 Corn Seeding
+AR18_normal=Aggregate_normal.data(read.AR18_normal)
+#AR18
+
+#2018 Corn Harvest
+Y18_normal=Aggregate_normal.data(read.Y18_normal)
+#Y18
+
+#2019 Soybeans Harvest
+Y19_normal=Aggregate_normal.data(read.Y19_normal)
+#Y19
+
+#2020 Corn Seeding
+AR20_normal=Aggregate_normal.data(read.AR20_normal)
+#AR20
+
+#2020 Corn Harvest
+Y20_normal=Aggregate_normal.data(read.Y20_normal)
+#Y20
+
+
+## Merge the data
+#Function to extract Column Cell and Mean for each Aggregated file.
+merge_data<-function(data,name){
+ data_cell_mean<-data.frame(data$Cell, data$Mean)
+ colnames(data_cell_mean)<-c("Cell",name)
+ return (data_cell_mean)
+}
+
+
+#2017 Soybeans Harvest
+Y17_normal_cell_mean=merge_data(Y17_normal,"Y17")
+#Y17_cell_mean
+
+#2018 Corn Seeding
+AR18_normal_cell_mean=merge_data(AR18_normal,"AR18")
+#AR18_cell_mean
+
+
+#2018 Corn Harvest
+Y18_normal_cell_mean=merge_data(Y18_normal,"Y18")
+#Y18_cell_mean
+
+
+#2019 Soybeans Harvest
+Y19_normal_cell_mean=merge_data(Y19_normal,"Y19")
+#Y19_cell_mean
+
+
+#2020 Corn Seeding
+AR20_normal_cell_mean=merge_data(AR20_normal,"AR20")
+#AR20_cell_mean
+
+
+#2020 Corn Harvest
+Y20_normal_cell_mean=merge_data(Y20_normal,"Y20")
+#Y20_cell_mean
+
+
+
+#Merge all the extracted data to get the final merged data frame named Combined_normal.dat.
+Combined_normal.dat<-Reduce(merge, list(Y17_normal_cell_mean,AR18_normal_cell_mean,Y18_normal_cell_mean,Y19_normal_cell_mean, AR20_normal_cell_mean,Y20_normal_cell_mean))
+Combined_normal.dat
+
+Combined_normal.dat<-Combined_normal.dat[,c("Y17","AR18", "Y18","Y19","AR20", "Y20")]
+
+#Combined_normal.dat
+
+
+
+```
+#### Part a: Visualized the normalized data using a pairs plot and DAG.
+```{r}
+####visualize the data.
+#Create a Pairs plot.
+pairs(Combined_normal.dat, col='black')
+
+#Create directed acyclic graph(DAG).
+library(bnlearn)
+# install.packages("BiocManager")
+# BiocManager::install("Rgraphviz")
+
+modela.dag<-model2network("[Y17][AR18|Y17][Y18|AR18:Y17]")
+fit1=bn.fit(modela.dag, Combined_normal.dat[,c('Y17', 'AR18','Y18')])
+#fit1
+strengtha<-arc.strength(modela.dag,Combined_normal.dat[, c('Y17','AR18','Y18')]) 
+strength.plot(modela.dag, strengtha)
+
+
+modelb.dag<-model2network("[Y19][AR20|Y19][Y20|AR20:Y19]")
+fit2=bn.fit(modelb.dag, Combined_normal.dat[ , c('Y19','AR20','Y20')])
+#fit2
+strengthb<-arc.strength(modelb.dag, Combined_normal.dat[, c('Y19','AR20','Y20')])
+strength.plot(modelb.dag, strengthb)
+
+
+model1.dag<-model2network("[Y17][AR18|Y17][Y18|AR18:Y17][Y19|Y17:AR18:Y18][AR20|Y19][Y20|AR20:Y19]")
+strength1<-arc.strength(model1.dag,Combined_normal.dat[, c('Y17','AR18','Y18','Y19','AR20','Y20')])
+strength.plot(model1.dag, strength1,main="Rank Normalization")
+
+
+```
+
+
+#### Part b: Aggregate the data before ranking.
+```{r}
+
+###(2)Aggregate before ranking.
+read.Y17<-read.csv("A 2017 Soybeans Harvest.csv")
+read.AR18<-read.csv("A 2018 Corn Seeding.csv")
+read.Y18<-read.csv("A 2018 Corn Harvest.csv")
+read.Y19<-read.csv("A 2019 Soybeans Harvest.csv")
+read.AR20<-read.csv("A 2020 Corn Seeding.csv")
+read.Y20<-read.csv("A 2020 Corn Harvest.csv")
+
+
+#2017 Soybeans Harvest
+Y17_n=Aggregate_Y.data(read.Y17)
+#Y17
+
+#2018 Corn Seeding
+AR18_n=Aggregate_AR.data(read.AR18)
+#AR18
+
+#2018 Corn Harvest
+Y18_n=Aggregate_Y.data(read.Y18)
+#Y18
+
+#2019 Soybeans Harvest
+Y19_n=Aggregate_Y.data(read.Y19)
+#Y19
+
+#2020 Corn Seeding
+AR20_n=Aggregate_AR.data(read.AR20)
+#AR20
+
+#2020 Corn Harvest
+Y20_n=Aggregate_Y.data(read.Y20)
+#Y20
+
+
+# Rank the data.
+rank_data<-function(data){
+  data$rank_ratio=rank(data$Mean)/max(rank(data$Mean))
+  return (data)
+}
+
+#2017 Soybeans Harvest
+Y17_n=rank_data(Y17_n)
+#read_normal.Y17_normal
+
+#2018 Corn Seeding
+AR18_n=rank_data(AR18_n)
+#read_normal.AR18_normal
+
+
+#2018 Corn Harvest
+Y18_n=rank_data(Y18_n)
+#read.Y18_normal
+
+
+#2019 Soybeans Harvest
+Y19_n=rank_data(Y19_n)
+#read.Y19
+
+
+#2020 Corn Seeding
+AR20_n=rank_data(AR20_n)
+#read.AR20_normal
+
+
+
+#2020 Corn Harvest
+Y20_n=rank_data(Y20_n)
+#read.Y20_normal
+
+
+
+##### merge the data.
+merge_data<-function(data,name){
+ data_cell_mean<-data.frame(data$Cell, data$rank_ratio)
+ colnames(data_cell_mean)<-c("Cell",name)
+ return (data_cell_mean)
+}
+
+
+#2017 Soybeans Harvest
+Y17_n_cell_mean=merge_data(Y17_n,"Y17")
+#Y17_cell_mean
+
+#2018 Corn Seeding
+AR18_n_cell_mean=merge_data(AR18_n,"AR18")
+#AR18_cell_mean
+
+
+#2018 Corn Harvest
+Y18_n_cell_mean=merge_data(Y18_n,"Y18")
+#Y18_cell_mean
+
+
+#2019 Soybeans Harvest
+Y19_n_cell_mean=merge_data(Y19_n,"Y19")
+#Y19_cell_mean
+
+
+#2020 Corn Seeding
+AR20_n_cell_mean=merge_data(AR20_n,"AR20")
+#AR20_cell_mean
+
+
+#2020 Corn Harvest
+Y20_n_cell_mean=merge_data(Y20_n,"Y20")
+#Y20_cell_mean
+
+
+
+#Merge all the extracted data to get the final merged data frame named Combined.dat.
+Combined_n.dat<-Reduce(merge, list(Y17_n_cell_mean,AR18_n_cell_mean,Y18_n_cell_mean,Y19_n_cell_mean, AR20_n_cell_mean,Y20_n_cell_mean))
+Combined_n.dat
+
+Combined_n.dat<-Combined_n.dat[,c("Y17","AR18", "Y18","Y19","AR20", "Y20")]
+
+#Combined_normal.dat
+
+
+
+
+```
+
+#### Part b: Visualize the normalized data using a pairs plot and DAG.
+
+```{r}
+
+#Create a Pairs plot.
+pairs(Combined_n.dat, col='black')
+
+#Create directed acyclic graph(DAG).
+library(bnlearn)
+# install.packages("BiocManager")
+# BiocManager::install("Rgraphviz")
+
+modela.dag<-model2network("[Y17][AR18|Y17][Y18|AR18:Y17]")
+fit1=bn.fit(modela.dag, Combined_n.dat[,c('Y17', 'AR18','Y18')])
+#fit1
+strengtha<-arc.strength(modela.dag,Combined_n.dat[, c('Y17','AR18','Y18')]) 
+strength.plot(modela.dag, strengtha)
+
+
+modelb.dag<-model2network("[Y19][AR20|Y19][Y20|AR20:Y19]")
+fit2=bn.fit(modelb.dag, Combined_n.dat[ , c('Y19','AR20','Y20')])
+#fit2
+strengthb<-arc.strength(modelb.dag, Combined_n.dat[, c('Y19','AR20','Y20')])
+strength.plot(modelb.dag, strengthb)
+
+
+model1.dag<-model2network("[Y17][AR18|Y17][Y18|AR18:Y17][Y19|Y17:AR18:Y18][AR20|Y19][Y20|AR20:Y19]")
+strength1<-arc.strength(model1.dag,Combined_n.dat[, c('Y17','AR18','Y18','Y19','AR20','Y20')])
+strength.plot(model1.dag, strength1,main="Rank Normalization")
+
+```
+
+
+
+
+### Step 7 Compare pairs plots of three final merged data frames.
+
+*1. Original Data*
+
+*2. Rank normalized data(Rank before aggregating)*
+
+*3. Rank normalized data(Aggregate before ranking)*
+
+```{r}
+
+par(mfrow=c(1,3))
+pairs(Combined.dat, col='black',main="Original Data")
+pairs(Combined_normal.dat, col='black',main="Rank Normalization(Rank before Aggregating)" )
+pairs(Combined_n.dat, col='black', main="Rank Normalization(Aggregate before ranking)")
+```
+
+
+
+
+### Step 8 Compare Directed Acyclic Graph of three final merged data frames.
+
+*1. Original Data*
+
+*2. Rank normalized data(Rank before aggregating).*
+
+*3. Rank normalized data(Aggregate before ranking).*
+
+```{r}
+
+library(bnlearn)
+# install.packages("BiocManager")
+# BiocManager::install("Rgraphviz")
+par(mfrow=c(1,3))
+model1.dag<-model2network("[Y17][AR18|Y17][Y18|AR18:Y17][Y19|Y17:AR18:Y18][AR20|Y19][Y20|AR20:Y19]")
+strength1<-arc.strength(model1.dag,Combined.dat[, c('Y17','AR18','Y18','Y19','AR20','Y20')])
+strength.plot(model1.dag, strength1,main="Original Data")
+
+model2.dag<-model2network("[Y17][AR18|Y17][Y18|AR18:Y17][Y19|Y17:AR18:Y18][AR20|Y19][Y20|AR20:Y19]")
+strength2<-arc.strength(model2.dag,Combined_normal.dat[, c('Y17','AR18','Y18','Y19','AR20','Y20')])
+strength.plot(model2.dag, strength2,main="Rank (Rank First)")
+
+model3.dag<-model2network("[Y17][AR18|Y17][Y18|AR18:Y17][Y19|Y17:AR18:Y18][AR20|Y19][Y20|AR20:Y19]")
+strength3<-arc.strength(model3.dag,Combined_n.dat[, c('Y17','AR18','Y18','Y19','AR20','Y20')])
+strength.plot(model3.dag, strength3,main="Rank (Aggregate First)")
+
+#PMC:I would prefer rank first then aggregate, this would make sure all the data are normalized before we implement them, in this way, the result would be mor eaccurate. 
+```
+
+
+
+### Step 9 Draw a Conclusion.
+
+**I have created merged data frames that are suitable for bnlearn library and meets the requirment of the data structure for bnlearn.**
+
+**I also normalized the data using rank normalization. The reason that I choose Rank Normalization instead of option 2 z-score and option 3 percent is that I find our data are not normally distributed by calculating skewness and kurtosis and option 2 z-score and option 3 percent should assume the data are normally distributed. I used two ways: rank before aggregating and aggregate before ranking. Turns out these two ways generate the different outputs . I would prefer use rank before aggregating because it can make sure every data are normalized. ** 
+
+
+
+*(1) If we use original data, 2017 Soybean harvest has a strong relationship with 2018 corn harvest and 2018 Corn Seeding;2018 corn harvest has a strong relationship with 2019 Soybeans Harvest; 2019 Soybeans Harvest has a strong relationship with 2020 Corn Seeding; 2020 Corn Seeding has a strong relationship with 2020 Corn Harvest.*
+
+*(2) If we normalize the data (rank before aggregating), 2017 Soybean harvest has a strong relationship with 2018 Corn Seeding;2018 Corn Seeding has a strong relationship with 2018 Corn Harvest; 2018 corn harvest has a strong relationship with 2019 Soybeans Harvest; 2019 Soybeans Harvest has a strong relationship with 2020 Corn Seeding; 2020 Corn Seeding has a strong relationship with 2020 Corn Harvest.*
+
+*(3) If we normalize the data (aggregate before ranking),2017 Soybean harvest has a less strong relationship with 2018 corn harvest; 2017 Soybean harvest has a strong relationship with 2018 Corn Seeding;2018 Corn Seeding has a less strong relationship with 2018 Corn Harvest;2018 corn harvest has a strong relationship with 2019 Soybeans Harvest; 2019 Soybeans Harvest has a strong relationship with 2020 Corn Seeding; 2020 Corn Seeding has a strong relationship with 2020 Corn Harvest.*
+
+
+
+
+
+

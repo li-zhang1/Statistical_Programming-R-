@@ -1,0 +1,291 @@
+---
+title: "3 Functions and Macros Homework"
+author: "Li Zhang"
+date: "06/17/2021"
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+version: 1.2
+---
+
+
+# Exercise 1
+
+As before, using values from Table 1, show how Wansink and Payne calculate percent increase in calories per recipe (43.7%), calories per serving (63.0%) and servings per recipe (-2.0). That is, confirm the values in the final column of Table 1 (Change from
+1936 to 2006, %, p. 292).
+
+Write a function to perform these calculations. Name the function `percent.increase` (or similar for SAS) with parameter `m_1` and `m_2`. Check that this function duplicates the values you calculated for Homework 2.
+
+## Answer
+
+```{r}
+
+#Homework2:
+scales::percent((3051.9-2123.8)/2123.8)
+
+scales::percent((384.4-268.1)/268.1)
+
+scales::percent((12.7-12.9)/12.9)
+
+
+
+# Homework3:Write a function to perform these calculations:
+percent.increase<-function(m_1, m_2){
+  return(scales::percent((m_1-m_2)/m_2))
+}
+percent.increase(3051.9, 2123.8)
+percent.increase(384.4, 268.1)
+percent.increase(12.7,12.9)
+
+#PMC: The answers are the same as those I calculated for Homework2
+```
+
+# Exercise 2
+
+Consider this quotation from Wansink
+
+>Over the past 70 years, the total caloric content increased
+for 14 of the 18 recipes. Because of changes in ingredients,
+the mean average calories in a recipe increased by 928.1 (from
+2123.8 calories [95% CI, 1638.7 to 2608.9 calories] to 3051.9 calories
+[CI, 2360.7 to 3743.1 calories]), representing a 43.7% increase
+(P < 0.001). As the Table indicates, mean average calories per serving
+increased for 17 of 18 recipes and was influenced by both
+changes in ingredients and changes in serving size. The resulting
+increase of 168.8 calories (from 268.1 calories [CI, 210.4 to 325.8
+calories] to 436.9 calories [CI, 359.1 to 514.7 calories]) represents a
+63.0% increase (P < 0.001) in calories per serving.
+
+Write a function named `ConfidenceInterval` that returns list comprised of the `Lower` and `Upper` bounds. 
+You may `ConfidenceBound` function from course outline to produce confidence interval or write your own version. You function should accept as arguments `mean`, `sd` and `n`, and an optional parameter `alpha=0.05`.
+
+Confirm the confidence intervals reported as
+
+- [95% CI, 1638.7 to 2608.9 calories]
+- [CI, 2360.7 to 3743.1 calories]
+- [CI, 210.4 to 325.8 calories]
+- [CI, 359.1 to 514.7 calories]
+
+Use the appropriate values from Table 1. 
+
+Then, write a function `ConfidenceBoundT` that uses the $t$ distribution instead of the normal distribution (call `pt` instead of `pnorm` and use $n-1$ d.f.). Compare the resulting confidence intervals.
+
+If you use SAS, define a subroutine in IML and accepts Upper and Lower as parameters, then print these values after each function call. If you wish, you may return a matrix (even though we haven't covered them in lecture).
+
+## Answer
+
+Define your function(s) in the code chunk below, the call the function with appropriate parameters in the following sections
+
+```{r}
+
+StandardError <- function(sd,n){
+  sd/sqrt(n)
+}
+
+ConfidenceBound<-function(sd, n, alpha=0.05){
+  qnorm(1-alpha/2)*StandardError(sd,n)
+}
+
+ConfidenceInterval<-function(mean, sd, n, alpha=0.05){
+  local.Lower<- mean-ConfidenceBound(sd, n)
+  local.Upper<- mean+ConfidenceBound(sd, n)
+  return(list(Lower=local.Lower, Upper=local.Upper)) 
+}
+
+ConfidenceBoundT <- function(sd, n, alpha = 0.05) {
+qt(1-alpha/2, n-1)*StandardError(sd,n)
+}
+
+ConfidenceIntervalT<-function(mean, sd, n, alpha=0.05){
+  local.Lower<- mean-ConfidenceBoundT(sd, n)
+  local.Upper<- mean+ConfidenceBoundT(sd, n)
+  return(list(LowerT=local.Lower, UpperT=local.Upper)) 
+}
+
+
+
+```
+
+## [95% CI, 1638.7 to 2608.9 calories]
+
+
+```{r}
+StandardError(1050.0,18)
+ConfidenceBound(1050.0, 18)
+ConfidenceInterval(2123.8,1050.0, 18)
+ConfidenceBoundT(1050.0, 18)
+ConfidenceIntervalT(2123.8,1050.0, 18)
+# when use normal distribution to calculate connfidence intervals, 
+# the results are the same as the ones reported by Wansink.[1638.7, 2608.9].
+# ConfidenceBoundT(t-distribution)>ConfidenceBound(normal distribution)
+# ConfidenceIntervalT is wider than ConfidenceInterval.
+```
+
+## [CI, 2360.7 to 3743.1 calories]
+
+```{r}
+
+StandardError(1496.2,18)
+ConfidenceBound(1496.2, 18)
+ConfidenceInterval(3051.9,1496.2, 18)
+ConfidenceBoundT(1496.2, 18)
+ConfidenceIntervalT(3051.9,1496.2, 18)
+# when use normal distribution to calculate connfidence intervals, 
+# the results are the same as the ones reported by Wansink.[2360.7, 3743.1].
+# ConfidenceBoundT(t-distribution)>ConfidenceBound(normal distribution)
+# ConfidenceIntervalT is wider than ConfidenceInterval.
+```
+
+## [CI, 210.4 to 325.8 calories]
+
+```{r}
+
+StandardError(124.8,18)
+ConfidenceBound(124.8, 18)
+ConfidenceInterval(268.1,124.8, 18)
+ConfidenceBoundT(124.8, 18)
+ConfidenceIntervalT(268.1,124.8, 18)
+# when I use normal distribution to calculate connfidence intervals, 
+# the results are the same as the ones reported by Wansink.[210.4, 325.8].
+# ConfidenceBoundT(t-distribution)>ConfidenceBound(normal distribution)
+# ConfidenceIntervalT is wider than ConfidenceInterval.
+```
+
+## [CI, 359.1 to 514.7 calories]
+
+```{r}
+
+StandardError(168.3,18)
+ConfidenceBound(168.3, 18)
+ConfidenceInterval(384.4,168.2, 18)
+ConfidenceBoundT(168.3, 18)
+ConfidenceIntervalT(384.4,168.2, 18)
+
+#Bases on Table1, Mean Average calories per serving on 2006 should be 384.4 instead of 436.9, 
+#since 436.9 is F value. 
+#Therefore, the confidence intervals I calculated here [306.697, 462.103] 
+#is different from the one reported by Wansink [359.1, 514.7].
+#ConfidenceBoundT(t-distribution)>ConfidenceBound(normal distribution)
+#ConfidenceIntervalT is wider than ConfidenceInterval.
+
+
+
+##Brief Comment: Based on my calculation, I found that 
+#ConfidenceBoundT(use normal distribution) is greater than ConfidenceBound(use t-distribution), 
+# and naturally lead that the confidence Intervals calculated by using t-distribution 
+# is wider than the confidence intervals reported by Wansink(using normal distribution).
+#As we know,t-distribution is more useful when the sample size is small(less than 30) 
+#while normal distribution is for larger sample size(greater than 30). 
+#The basic idea here is that 
+#when we have small sample sizes(the sample size n is 18 in our case),
+#we're less certain about the true population mean. 
+#so it makes sense to use the t-distribution to produce wider confidence intervals
+#that have a higher chance of containing the true population mean.
+```
+
+
+# Exercise 3
+
+Implement the probability density function for the normal distribution as a function or macro. 
+
+$$
+f(x,  \mu, \sigma^2) = \frac{1}{\sigma \sqrt{2 \pi}} e^{- \frac{(x - \mu)^2}{2 \sigma^2}}
+$$
+
+Define $\mu$ and $\sigma$ as optional parameters, taking values `mu=0` and `sigma=1`. Name this function `norm.pdf`
+  
+## Answer
+
+Define your function(s) in the code chunk below, the call the function with appropriate parameters in the following sections. Use $\sigma = 2$ and compare with previous homework.
+
+```{r}
+norm.pdf<-function(x, mu=0, sigma=1){
+m<- exp(-((x-mu)^2)/(2*(sigma)^2))
+n<- 1/(sigma*(sqrt(2*pi)))
+return(m*n)
+}
+
+```
+
+## $x=-0.1$
+
+```{r}
+norm.pdf(-0.1, 0, 2)
+```
+
+## $x=0.0$
+
+```{r}
+norm.pdf(0.0, 0, 2)
+```
+
+## $x=0.1$
+
+```{r}
+norm.pdf(0.1, 0, 2)
+
+#PMC:The answers are the same as the results of the previous homework. 
+#Here we need to know that 
+#If the caller provides an arguments for any one of a succession of optional parameters, 
+#it must provide arguments for all preceding optional parameters.
+```
+
+
+# Exercise 4
+
+The probability mass function for value $x$ from Poisson data with a mean and variance $\lambda$ is given by 
+
+$$
+f(x,\lambda) = \frac{e^{-\lambda} \lambda^x}{x!}
+$$
+Write a function `pois.pmf` that accepts two parameters, `x` and `lambda`. Use the built in `factorial` function for $x!$. Note that $x$ should be an integer value, so call a rounding function inside your function.
+
+Test your function with $\lambda = 12$ at $x = 4,12,20$
+
+## Answer
+
+Define your function(s) in the code chunk below, the call the function with appropriate parameters in the following sections
+
+```{r}
+pois.pmf<-function(x,lambda){
+  ((exp(-lambda))*(lambda)^round(x))/factorial(round(x))
+}
+```
+
+## $x=4$
+
+```{r}
+pois.pmf(4,12)
+```
+
+## $x=12$
+
+```{r}
+pois.pmf(12,12)
+```
+
+## $x=20$
+
+```{r}
+pois.pmf(20,12)
+```
+
+You can check your work against the built in Poisson distribution functions.
+
+```{r}
+dpois(4,12)
+dpois(12,12)
+dpois(20,12)
+# PMC: we know that possion distribution is not defined for non-intergers, 
+# therefore, when we write our own function: pois.pmf
+# we need to  make the decision about how to handle non-interger input. 
+#In my self defined function pois.pmf, 
+#I used rounding function to round every parameter x. 
+#The return value would be the same as the result of bulit-in the function dpois.
+#when lambda and x are the same.
+```
+
+
+
+

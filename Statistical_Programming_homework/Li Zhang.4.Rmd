@@ -1,0 +1,420 @@
+---
+title: "Homework 4 Arrays and Lists"
+author: 'Li Zhang'
+date: '06/22/2021'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r,echo=FALSE}
+options(digits=12)
+```
+
+# Instructions
+
+## Reuse
+
+For many of these exercises, you may be able to reuse functions written in prior homework. Include those functions here. You may find that you will need to modify your functions to work correctly for these exercises.
+
+I'm also including data vectors that can be used in some exercises.
+
+```{r}
+CaloriesPerServingMean <- c(268.1, 271.1, 280.9, 294.7, 285.6, 288.6, 384.4)
+CaloriesPerServingSD <- c(124.8, 124.2, 116.2, 117.7, 118.3, 122.0, 168.3)
+Year <- c(1936, 1946, 1951, 1963, 1975, 1997, 2006)
+```
+
+
+
+# Exercise 1
+
+In this exercise, we will test your `norm.pdf` function with a range of inputs.
+
+**Do not print the vectors you create for this exercise in the final typeset submission** We will check the results by examining the plots, and printing the vectors themselves will unnecessarily clutter your report. If you get stuck, use the built normal functions to create your plots.
+
+### Part a.
+
+Generate a sequence of values from $-3,...,3$ incremented by $0.1$; let this be `x_1`. 
+Calculate the PDF of each value of `x_1` using the `norm.pdf` function from Homework 3, letting `mu=0` and `sd=1`. Plot the PDF curve ($norm.pdf$ is the dependent variable, $x$ is independent) as a line graph.
+
+```{r}
+
+norm.pdf<-function(x, mu=0, sd=1){
+m<- exp(-((x-mu)^2)/(2*(sd)^2))
+n<- 1/(sd*(sqrt(2*pi)))
+return(m*n)
+}
+
+x_1<-seq(-3,3,0.1)
+PDF=norm.pdf(x_1, 0, 1)
+plot(x_1, PDF,main = "PDF curve",type="l", xlab="x", ylab="norm.pdf")
+legend(x="topright", legend=c("norm.pdf"),col="Black", lwd=1, cex=1, 
+horiz="FALSE", text.font=2)
+
+```
+```{r}
+#check if the result is right or not using function dnorm
+x_1<-seq(-3,3,0.1)
+PDF_c1=dnorm(x_1, 0, 1)
+plot(x_1, PDF_c1,main = "PDF curve",type="l", xlab="x", ylab="dnorm")
+legend(x="topright", legend=c("dnorm"), col="Black", 
+lwd=1, cex=1, horiz="FALSE", text.font=2)
+```
+### Part b.
+
+Let $m_{1936}$ be the mean Calories per Serving from 1936, and let $m_{2006}$ be the mean Calories per Serving, 2006. Let $s_{1936}$ and $s_{2006}$ be the corresponding standard deviations.
+
+Create two sequences and name these `x_2` and `x_3`. Define `x_2` to be a range of values $[m_{1936} - 3\times s_{1936}, \dots, m_{1936} + 3\times s_{1936}]$ and define `x_3` to be $[m_{2006} - 3\times s_{2006}, \dots, m_{2006} + 3\times s_{2006}]$. `x_2` and `x_3` should be the same length as `x_1`.
+
+Calculate the corresponding pdf for these sequences, using $\{\mu=m_{1936},\sigma=s_{1936}\}$ with `x_2` and use $\{\mu=m_{2006},\sigma=s_{2006}\}$ with `x_3`.
+
+As with part a, plot the pdf curve for both sequences, but include both in the same graph. Use two different colors or line types for each curve. You may need to use `min` and `max` to find `xlim` values or `ylim` to fit both curves on the same plot. The first curve in this graph should appear identical to the curve in part a; the second curve will be similar but will differ in location and spread.
+
+
+```{r}
+norm.pdf<-function(x, mu=0, sd=1){
+m<- exp(-((x-mu)^2)/(2*(sd)^2))
+n<- 1/(sd*(sqrt(2*pi)))
+return(m*n)
+}
+m_1936 <-268.1
+m_2006 <-384.4
+s_1936 <-124.8
+s_2006 <-168.3
+x_2 <-seq (m_1936-3*s_1936, m_1936+3*s_1936)
+x_3 <-seq (m_2006-3*s_2006, m_2006+3*s_2006)
+PDF_2=norm.pdf(x_2, m_1936, s_1936)
+PDF_3=norm.pdf(x_3, m_2006, s_2006)
+min_1<-min(m_1936-3*s_1936,m_2006-3*s_2006 )
+max_1<-max(m_1936+3*s_1936, m_2006+3*s_2006)
+plot(x_2, PDF_2,main = "PDF curve",type="l", xlab="x", ylab="norm.pdf", xlim=c(min_1, max_1))
+lines(x_3, PDF_3,main = "PDF curve",type="l", col="blue", xlab="x", ylab="norm.pdf", xlim=c(min_1, max_1))
+plot_colors<-c("black", "blue")
+legend(x="topright", legend=c("x_2(1936)","x_3(2006)"), col=plot_colors, lwd=1, cex=1, horiz="FALSE", text.font=2)
+       
+
+
+```
+
+
+If you choose to solve this with SAS, I've included code in the SAS template to create the graphs, since combining plots in IML is not as easy as in R.
+
+If you wish, you may reproduce the curves using `dnorm` to compare with your function.
+#check if the result is right or not using function dnorm(x, mean, sd)
+```{r}
+m_1936 <-268.1
+m_2006 <-384.4
+s_1936 <-124.8
+s_2006 <-168.3
+x_2 <-seq (m_1936-3*s_1936, m_1936+3*s_1936)
+x_3 <-seq (m_2006-3*s_2006, m_2006+3*s_2006)
+PDF_c2=dnorm(x_2, m_1936, s_1936)
+PDF_c3=dnorm(x_3, m_2006, s_2006)
+min_1<-min(m_1936-3*s_1936,m_2006-3*s_2006 )
+max_1<-max(m_1936+3*s_1936, m_2006+3*s_2006)
+plot(x_2, PDF_c2,main = "PDF curve",type="l", xlab="x", ylab="dnorm", xlim=c(min_1, max_1))
+lines(x_3, PDF_c3,main = "PDF curve",type="l", col="blue",xlab="x", ylab="dnorm", xlim=c(min_1, max_1))
+plot_colors<-c("black", "blue")
+legend(x="topright", legend=c("x_2(1936)","x_3(2006)"), col=plot_colors, lwd=1, cex=1,horiz="FALSE", text.font=2)
+
+```
+# Exercise 2
+
+Suppose we wish to determine the relationship between per Calories per Serving and Year. We can determine this by solving a system of linear equations, of the form
+
+$$
+\begin{aligned}
+268.1 & = \beta_1 + \beta_2 \times 1936 \\
+271.1 & = \beta_1 + \beta_2 \times 1946  \\
+\vdots & = \vdots \\
+384.4 & = \beta_1 + \beta_2 \times 2006 \\
+\end{aligned}
+$$
+
+We write this in matrix notation as
+
+$$
+\left(\begin{array}{c}
+268.1 \\
+271.1 \\
+\vdots \\
+384.4 
+ \end{array}\right) 
+ =
+ \left(\begin{array}{rr}
+ 1 & 1936 \\
+ 1 & 1946  \\
+\vdots & \vdots \\
+ 1 & 2006
+ \end{array}\right) 
+ \left(\begin{array}{c}
+ \beta_1 \\
+ \beta_2
+ \end{array}\right)^t
+$$
+
+We can also write this as 
+
+$$
+\mathbf{y} = \mathbf{X} \mathbf{\beta}
+$$ 
+
+and find a solution by computing $\mathbf{\widehat{\beta}} = \mathbf{X}^{- 1}\mathbf{y}$. 
+
+However, an exact solution for the inverse, $\mathbf{X}^{- 1}$ require square matrices, so commonly we use the *normal* equations, 
+
+$$ \mathbf{X}^{t}  \mathbf{y} = \mathbf{X}^{t} \mathbf{X}  \mathbf{\beta} $$
+(where $\mathbf{X}^{t}$ is the transpose of $\mathbf{X}$). We then find 
+
+$$
+\widehat{\mathbf{\beta}} = \left(\mathbf{X}^{t} \mathbf{X} \right)^{-1} \mathbf{X}^{t} \mathbf{y}
+$$
+
+
+### Answer
+
+Define appropriate `X` and `y` matrices (`y` can be a vector in R) in the chunk below.
+
+Multiply the transpose of `X` by `X`, then use `solve` (R) or `inv` (IML) to find the inverse $\left(\mathbf{X}^{t} \mathbf{X} \right)^{-1}$. Multiply this by the product of transpose `X` and `y` to find `hat.beta`.
+
+Print your `hat.beta`.
+
+```{r}
+Year=matrix(c(1936, 1946, 1951, 1963, 1975, 1997, 2006))
+X=matrix(c(rep(1, 7), Year), nrow=7, ncol=2)
+
+y=c(268.1, 271.1, 280.9, 294.7, 285.6, 288.6, 384.4)
+hat.beta=solve((t(X) %*% X), (t(X) %*% y))
+hat.beta
+
+```
+
+
+To check your work, calculate the values predicted by your statistical model. Compute `hat.y` by multiplying `X` and `hat.beta`,
+$$\widehat{y} = \mathbf{X}  \widehat{\beta}$$
+Plot `y` vs the independent variable (the second column of `X`) as points, and `hat.y` vs  independent variable  as a line, preferably a different colors. The `hat.y` values should fall a straight line that interpolates `y` values.
+
+```{r}
+hat.y= X %*% hat.beta
+hat.y
+min_11=min(hat.y, y)
+max_11=max(hat.y, y)
+plot(X[,2],y, xlab="Year", ylab="CaloriesPerServingMean", 
+main="Linear Regresssion Model", col="Red", 
+     xlim=c(1936,2006), ylim=c(min_11,max_11))
+cal.lm <-lm(hat.y~X[,2])
+abline(reg=cal.lm,col="blue")
+plot_colors<-c("Red", "blue")
+legend(x="topleft", legend=c("y","hat.y"), 
+lty=c(NA,1), pch=c("o",NA), col=plot_colors,horiz="FALSE", text.font=2)
+
+```
+
+You can also compare your result to the R function (set `eval=TRUE`).
+
+```{r,eval=TRUE}
+CaloriesPerServingMean=c(268.1, 271.1, 280.9, 294.7, 285.6, 288.6, 384.4)
+summary(lm(CaloriesPerServingMean~Year))
+```
+
+
+#### Alternative methods
+You can also compute $\widehat{\beta}$ by passing both $\mathbf{X}^{t} \mathbf{X}$ and
+$\mathbf{X}^{t} \mathbf{y}$ as arguments to `solve`.
+
+Alternatively, you can install the `MASS ` library and use `ginv` to compute a generalized inverse $\mathbf{X}^{- 1}$. Use this to compute $\mathbf{\widehat{\beta}} = \mathbf{X}^-\mathbf{y}$ in the chunk below:
+
+```{r,eval=TRUE}
+
+library(MASS)
+X=matrix(c(rep(1, 7), Year), nrow=7, ncol=2)
+y=matrix(c(268.1, 271.1, 280.9, 294.7, 285.6, 288.6, 384.4))
+print(hat.beta <- ginv(X) %*% y)
+```
+
+
+# Exercise 3
+
+Given a vector of mean estimates $x = x_1, x_2, \dots, x_k$, a vector of standard deviations $s = s_1, s_2, \dots, s_k$ and a vector of sample sizes $n = n_1, n_2, \dots, n_k$, we can calculate a one-way analysis of variance by
+
+$$
+MSB = \frac{n_1(x_1-\bar{x})^2 + n_2(x_2-\bar{x})^2 + \dots + n_k(x_k-\bar{x})^2} {k-1} = \frac{\sum_i n_i(x_i-\bar{x})^2}{k-1}
+$$
+and
+
+$$
+MSW = \frac{(n_1-1)s_1^2 + (n_2-1)s_2^2 + \dots (n_k-1)s_k^2 }{N-k} = \frac{\sum_i (n_i-1)s_i^2}{N-k}
+$$
+
+where $\bar{x}$ is the weighted mean of $x_i$, where $\bar{x} = \frac{\sum_i n_i * x_i}{N}$ and $N = \sum_i n_i$. The test statistic is $F = \frac{MSB}{MSW}$ which is distributed as $F_{\alpha,k-1,N-k}$
+
+### Part a
+
+Calculate MSW and MSB for Calories per Serving from Wansink Table 1. You can use the variables `CaloriesPerServingMean` and `CaloriesPerServingSD` defined below. Let $n_1 = n_2 ... = n_k = 18$
+
+Use array functions and arithmetic for your calculations, you should not need iteration (for loops). Do not hard code values for $N$ and $k$, calculate these from the `CaloriesPerServingMean` or `CaloriesPerServingSD`. 
+ 
+Print both MSB and MSW.
+
+```{r}
+x=c(268.1, 271.1, 280.9, 294.7, 285.6, 288.6, 384.4)
+s=c(124.8, 124.2, 116.2, 117.7, 118.3, 122.0, 168.3)
+n=c(18,18,18,18,18,18,18)
+k=length(n)
+N=k*18
+x_bar=(18*(x[1]+x[2]+x[3]+x[4]+x[5]+x[6]+x[7]))/N
+MSB=18*((x[1]-x_bar)^2+(x[2]-x_bar)^2+(x[3]-x_bar)^2+(x[4]-x_bar)^2+
+          (x[5]-x_bar)^2+(x[6]-x_bar)^2+(x[7]-x_bar)^2)/(k-1)
+MSB
+MSW=((18-1)*(s[1]^2+s[2]^2+s[3]^2+s[4]^2+s[5]^2+s[6]^2+s[7]^2))/(N-k)
+MSW
+```
+
+### Part b
+Calculate an F-ratio and a $p$ for this $F$, using the $F$ distribution with $k-1$ and $N-k$ degrees of freedom. Use $\alpha=0.05$. Compare these values to the corresponding values reported in Wansink Table 1.
+
+```{r}
+F_ratio=MSB/MSW
+F_ratio
+p_value_1=1-pf(F_ratio, (k-1), (N-k))
+p_value_1
+```
+
+
+You can also check results by entering appropriate values in an online calculator like http://statpages.info/anova1sm.html .
+
+# Exercise 4
+
+In this, we compare the normal and Poisson distributions, using the functions you've written previously. This is also a way to test your normal and Poisson functions over a range of arguments. 
+
+**Do not print the vectors you create for this exercise in the final typeset submission** We will check the results by examining the plots, and printing the vectors themselves will unnecessarily clutter your report. If you get stuck, use the built functions to create your plots. However, the final submission must call your functions.
+
+### Part a
+
+Create a sequence of $x_a$ from $( -5 ... 5 )$, incremented by 0.1. Calculate the normal PDF for each $x$, assuming $\mu=0$ and $\sigma=1$. Also calculate Poisson PMF of each $x$ given a `lambda=1`.
+
+Plot both sets of probabilities against `x_a` as lines, using a different color for each curve. Make sure that both curves fit in the plot; you may need to determine minimum and maximum values and set these as graphic parameters (see `ylim`).
+
+Warning: if you do this in SAS, you may have to adjust the lower bound of $x$.
+
+```{r}
+x_a <-seq(from=-5,to=5, by=0.1)
+#Normal PDF for each x
+norm.pdf<-function(x, mu=0, sigma=1){
+m<- exp(-((x-mu)^2)/(2*(sigma)^2))
+n<- 1/(sigma*(sqrt(2*pi)))
+return(m*n)
+}
+PDF_ex4a=norm.pdf(x_a, 0, 1)
+# Poisson PMF of each x
+pois.pmf<-function(x,lambda){
+  ((exp(-lambda))*(lambda)^round(x))/factorial(round(x))
+}
+PMF_ex4a=pois.pmf(x_a,1)
+min_ex4a<-min(PDF_ex4a,PMF_ex4a, na.rm=TRUE  )
+max_ex4a<-max(PDF_ex4a,PMF_ex4a, na.rm=TRUE )
+plot(x_a, PDF_ex4a,main = "PDF vs PMF(Part a)",type="l", 
+xlab="x_a", ylab="PDF/PMF", ylim=c(min_ex4a,max_ex4a))
+lines(x_a, PMF_ex4a,main = "PDF vs PMF(Part a)",type="l", col="blue",xlab="x_a", ylab="PDF/PMF", 
+ylim=c(min_ex4a,max_ex4a))
+plot_colors<-c("black", "blue")
+legend(x="topright", legend=c("PDF","PMF"), 
+col=plot_colors, lwd=1, cex=1, 
+horiz="FALSE", text.font=2)
+
+
+
+# My normal PDF function lood fine and I think it behaves properly.
+# My Poisson doesn't handle negative or non-integer values as expected
+#it will generate the warning message: Warning in gamma(x + 1) : NaNs produced
+
+```
+
+Does this graph tell you if your Normal PDF function behaves properly?Does your Poisson handle negative or non-integer values as expected? You might need to call a rounding function on the parameters inside your function.
+
+
+### Part b
+
+Create a sequence of $x_b = \left \lfloor{\mu - 5 \times \sigma } \right \rfloor , \dots, \left \lceil{\mu+ 5 \times \sigma }  \right \rceil$ using mean and standard deviation for Servings per Recipe from 1936.
+
+Calculate the normal and Poisson probability for each $x_b$ as in part a, again using mean and standard deviation from servings per recipe, 1936. The length of this vector should be the same length as the $x_a$ vector as in part a ($\pm 1$), so you will need to calculate an interval based on the range `x_b` and the number of elements in `x_a`
+
+Show the the length of both $x$ vectors are similar by calling `length` for each.
+
+Repeat the plot from part a with this sequence.
+
+If you choose to solve this with SAS, I've included code in the SAS template to create the graphs, since combining plots in IML is not as easy as in R.
+
+
+```{r}
+ServingsPerRecipeMean_1936=12.9
+ServingsPerRecipeSD_1936=13.3
+x_b=seq(from=floor(ServingsPerRecipeMean_1936- 5*ServingsPerRecipeSD_1936),
+to=ceiling(ServingsPerRecipeMean_1936+ 5*ServingsPerRecipeSD_1936), length.out=length(x_a))
+#Normal PDF for each x
+norm.pdf<-function(x, mu=0, sigma=1){
+m<- exp(-((x-mu)^2)/(2*(sigma)^2))
+n<- 1/(sigma*(sqrt(2*pi)))
+return(m*n)
+}
+PDF_ex4b=norm.pdf(x_b, ServingsPerRecipeMean_1936, ServingsPerRecipeSD_1936)
+# Poisson PMF of each x
+pois.pmf<-function(x,lambda){
+  ((exp(-lambda))*(lambda)^round(x))/factorial(round(x))
+}
+PMF_ex4b=pois.pmf(x_b,ServingsPerRecipeMean_1936)
+min_ex4b<-min(PDF_ex4b,PMF_ex4b, na.rm=TRUE)
+max_ex4b<-max(PDF_ex4b,PMF_ex4b, na.rm=TRUE)
+
+plot(x_b, PDF_ex4b,main = "PDF vs PMF(Part b)",type="l", xlab="x_b",col="brown4", ylab="PDF/PMF",
+ylim=c(min_ex4b,max_ex4b))
+lines(x_b, PMF_ex4b,main = "PDF vs PMF(Part b)",type="l", col="chartreuse4",xlab="x_b", ylab="PDF/PMF", ylim=c(min_ex4b,max_ex4b))
+plot_colors<-c(" brown4", "chartreuse4")
+legend(x="topright", legend=c("PDF","PMF"),
+col=plot_colors, lwd=1, cex=1, 
+horiz="FALSE", text.font=2)
+
+```
+
+To check you work, duplicate the plots by calling built in normal and Poisson functions. Does the built in Poisson function handle negative $x$ differently than your function?
+
+```{r}
+PDF_c1=dnorm(x_a, 0, 1)
+PMF_c1=dpois(x_a,1)
+min_ex4c1<-min(PDF_c1,PMF_c1 )
+max_ex4c1<-max(PDF_c1,PMF_c1)
+min_ex4c1
+max_ex4c1
+plot(x_a, PDF_c1,main = "PDF vs PMF(Check part a)",type="l", xlab="x_a", ylab="PDF/PMF", 
+ylim=c(min_ex4c1, max_ex4c1))
+lines(x_a, PMF_c1,main = "PDF vs PMF(Check part a)",type="l", col="blue",xlab="x_a", ylab="PDF/PMF", ylim=c(min_ex4c1, max_ex4c1))
+plot_colors<-c("black", "blue")
+legend(x="topright", legend=c("PDF","PMF"), 
+col=plot_colors, lwd=1, cex=1, 
+horiz="FALSE", text.font=2)
+
+PDF_c2=dnorm(x_b, ServingsPerRecipeMean_1936, ServingsPerRecipeSD_1936)
+PMF_c2=dpois(x_b,ServingsPerRecipeMean_1936)
+min_ex4c2<-min(PDF_c2,PMF_c2 )
+max_ex4c2<-max(PDF_c2,PMF_c2 )
+
+plot(x_b, PDF_c2,main = "PDF vs PMF(Check part b)",type="l", xlab="x_b",col="brown4", ylab="PDF/PMF",
+ylim=c(min_ex4c2, max_ex4c2),
+xlim=c(min(x_a, x_b), 
+max(x_a, x_b)))
+lines(x_b, PMF_c2,main = "PDF vs PMF(Check part b)",type="l", col="chartreuse4",xlab="x_b", ylab="PDF/PMF",
+ylim=c(min_ex4c2, max_ex4c2),
+xlim=c(min(x_a, x_b),
+max(x_a, x_b)))
+plot_colors<-c(" brown4", "chartreuse4")
+legend(x="topright", legend=c("PDF","PMF"), 
+col=plot_colors, lwd=1, cex=1, 
+horiz="FALSE", text.font=2)
+#dpois handle negative values differently than my function pois.pmf
+
+
+```
+
+
+

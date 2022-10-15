@@ -1,0 +1,232 @@
+---
+title: "2 Calculation Exercises"
+author: 'Li Zhang'
+date: '06/11/2021'
+output:
+  pdf_document: default
+  word_document: default
+  html_document: default
+version: 1.2
+---
+
+# General instructions.
+
+There are four exercises below, and you will be required to provide four solutions, each worth ten points. You may provide a solution in either R or SAS, at your discretion. You must submit results document in Word or PDF form, along with your original Rmd (no R scripts) or SAS code for full credit. However, answers to any discussion questions must be included in the PDF or Word file submitted to D2L; we will not be grading SAS code files.
+
+
+# Exercise 1
+
+Using values from Table, show how Wansink and Payne calculate percent increase in calories per recipe (43.7%), calories per serving (63.0%) and servings per recipe (-2.0). That is, confirm the values in the final column of Table 1 (Change from
+1936 to 2006, %, p. 292).
+
+## Answer
+
+```{r}
+
+print((3051.9-2123.8)/2123.8)
+
+print((384.4-268.1)/268.1)
+
+print((12.7-12.9)/12.9)
+
+```
+
+# Exercise 2
+
+Using the values from Wansink, Table 1 as given in Homework 1 or in the course outline, calculate $p$-values for the difference between calories per serving for each of the pairs of means listed below:
+
+- 1936 versus 2006
+- 1936 versus 1997
+- 1997 versus 2006
+
+You may use either Wald's test or Student's $t$.
+
+How do your calculated $p$-values compare to the F test $p$-value reported in Table 1. Does this test provide stronger or weaker evidence for the claim that calories per serving has changed over time?
+
+## Answer
+
+Enter the R code in the chunks below. If you choose SAS for this exercise, use the marked portion in the SAS homework template. 
+## Null Hypothesis: calories per serving hasn't changed over time.
+
+```{r}
+#### 1936 versus 2006
+m_1936 <-268.1
+m_2006 <-384.4
+s_1936 <-124.8
+s_2006 <-168.3
+n_1936 <-n_2006 <-18
+hat.se <- sqrt(((s_1936^2)/n_1936)+((s_2006^2)/n_2006))
+w<-(m_2006-m_1936)/hat.se
+t<-(m_2006-m_1936)/hat.se
+2*(1-pt(abs(t),(n_1936-1)+ n_2006-1))
+# Null Hypothesis:calories per serving hasn't changed from 1936 to 2006
+# p<=0.05, reject null hypothesis. 
+# We conclude that calories per serving has changed from 1936 to 2006. 
+# This test provide the stronger evidence that calories per serving has changed over time.
+```
+
+
+
+```{r}
+#### 1936 versus 1997
+m_1936 <-268.1
+m_1997 <-288.6
+s_1936 <-124.8
+s_1997 <-122.0
+n_1936 <-n_1997 <-18
+hat.se <- sqrt(((s_1936^2)/n_1936)+((s_1997^2)/n_1997))
+w<-(m_1997-m_1936)/hat.se
+t<-(m_1997-m_1936)/hat.se
+2*(1-pt(abs(t),(n_1936-1)+ n_1997-1))
+# Null Hypothesis:calories per serving hasn't changed from 1936 to 1997
+# p>0.05, fail to reject null hypothesis. 
+# We conclude that calories per serving hasn't changed from 1936 to 1997. 
+# This test provide the weaker evidence that calories per serving has changed over time.
+```
+
+
+```{r}
+#### 1997 versus 2006
+m_1997 <-288.6
+m_2006 <-384.4
+s_1997 <-122.0
+s_2006 <-168.3
+n_1997 <-n_2006 <-18
+hat.se <- sqrt(((s_1997^2)/n_1997)+((s_2006^2)/n_2006))
+w<-(m_2006-m_1997)/hat.se
+t<-(m_2006-m_1997)/hat.se
+2*(1-pt(abs(t),(n_1997-1)+ n_2006-1))
+
+# Null Hypothesis:calories per serving hasn't changed from 1997 to 2006
+# p>0.05, fail to reject null hypothesis. 
+# We conclude that calories per serving hasn't changed from 1997 to 2006. 
+# This test provide the weaker evidence that calories per serving has changed over time.
+```
+
+# Exercise 3
+
+Using the values from Wansink, Table 1 as given in Homework 1 or in the course outline, calculate $p$-values for the difference between servings per recipe for each of the pairs of means listed below:
+
+- 1946 and 1951
+- 1951 and 1963
+- 1997 and 2006
+
+You may use either Wald's test or Student's $t$.
+
+Do your calculate $p$-values support this statement from Wansink (p.291)?
+
+> Over the 70-year history of The Joy of Cooking, the recommended serving sizes were altered at 3 points. Between 1946 and 1951, 3 of 18 recipes increased their serving size by an average of 32.5%. Between 1951 and 1963, 4 recipes increased their serving size by an average of 20.0%. Between 1997 and 2006, 5 recipes increased their serving size by an average of 21.1%
+
+```{r}
+#### 1946 and 1951
+m_1946 <-12.9
+m_1951 <-13.0
+s_1946 <-13.3
+s_1951 <-14.5
+n_1946 <-n_1951 <-18
+hat.se <- sqrt(((s_1946^2)/n_1946)+((s_1951^2)/n_1951))
+w<-(m_1951-m_1946)/hat.se
+t<-(m_1951-m_1946)/hat.se
+2*(1-pt(abs(t), (n_1946-1 +n_1951-1)))
+# Null Hypothesis:serving per recipe hasn't changed from 1946 to 1951
+# p> 0.05. fail to reject the null hypothesis. 
+# We conclude that the difference between servings per recipe from 1946 to 1951 is 0; or
+# We conclude that servings per recipe hasn't changed from 1946 to 1951. 
+# Therefore, our calculate cannot support the statement that 
+# Between 1946 and 1951, 3 of 18 recipes increased their serving size by an average of 32.5%.
+
+#### 1951 and 1963
+m_1951 <-13.0
+m_1963 <-12.7
+s_1951 <-14.5
+s_1963 <-14.6
+n_1951 <-n_1963 <-18
+hat.se <- sqrt(((s_1951^2)/n_1951)+((s_1963^2)/n_1963))
+w<-(m_1963-m_1951)/hat.se
+t<-(m_1963-m_1951)/hat.se
+2*(1-pt(abs(t), (n_1951-1 +n_1963-1)))
+# Null Hypothesis:serving per recipe hasn't changed from 1951 to 1963
+# p> 0.05. fail to reject the null hypothesis. 
+# We conclude that the difference between servings per recipe from 1951 to 1963 is 0; or
+# We conclude that servings per recipe hasn't changed from 1951 to 1963. 
+# Therefore, our calculate cannot support the statement that 
+# Between 1951 and 1963, 4 recipes increased their serving size by an average of 20.0%.
+
+#### 1997 and 2006
+m_1997 <-12.4
+m_2006 <-12.7
+s_1997 <-14.3
+s_2006 <-13.0
+n_1997 <-n_2006 <-18
+hat.se <- sqrt(((s_1997^2)/n_1997)+((s_2006^2)/n_2006))
+w<-(m_2006-m_1997)/hat.se
+t<-(m_2006-m_1997)/hat.se
+2*(1-pt(abs(t), (n_1997-1 +n_2006-1)))
+# Null Hypothesis:serving per recipe hasn't changed from 1997 to 2006
+# p> 0.05. fail to reject the null hypothesis. 
+# We conclude that the difference between servings per recipe from 1997 to 2006 is 0; or
+# We conclude that servings per recipe hasn't changed from 1997 to 2006. 
+# Therefore, our calculate cannot support the statement that 
+# Between 1997 and 2006, 5 recipes increased their serving size by an average of 21.1%.
+```
+# Exercise 4
+
+The probability density function for the distribution of a random variable denoted $x$, when taken from a normal population with mean $\mu$ and variance $\sigma^2$ is calculated by
+
+$$
+f(x,  \mu, \sigma^2) = \frac{1}{\sigma \sqrt{2 \pi}} e^{- \frac{(x - \mu)^2}{2 \sigma^2}}
+$$
+For values of $x = \{-0.1, 0.0, 0.1 \}$, write code to implement the formula above, for $\mu = 0$ and $\sigma = 2$. 
+  
+## Answer
+
+Enter the R code in the chunks below. If you choose SAS for this exercise, use the marked portion in the SAS homework template. 
+
+#### $x=-0.1$
+
+```{r}
+x<- -0.1
+mu <- 0
+sigma<-2
+m=exp(-((x-mu)^2)/(2*(sigma)^2))
+n=1/(sigma*(sqrt(2*pi)))
+m*n
+```
+
+#### $x=0.0$
+
+```{r}
+x<-0.0
+mu <-0
+sigma<-2
+m=exp(-((x-mu)^2)/(2*(sigma)^2))
+n=1/(sigma*(sqrt(2*pi)))
+m*n
+```
+
+#### $x=0.1$
+
+```{r}
+x<- 0.1
+mu <-0
+sigma<-2
+m=exp(-((x-mu)^2)/(2*(sigma)^2))
+n=1/(sigma*(sqrt(2*pi)))
+m*n
+
+```
+
+You can confirm your results using the built in normal distribution function. Look up `dnorm` in R help and use the same values for `x`, `mean` and `sigma` as above. You should get matching results to at least 12 decimal places.
+
+
+```{r}
+x <- -0.1
+dnorm(x, mean = 0, sd = 2, log = FALSE)
+x <-0.0
+dnorm(x, mean = 0, sd = 2, log = FALSE)
+x <-0.1
+dnorm(x, mean = 0, sd = 2, log = FALSE)
+
+```
+
+

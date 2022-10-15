@@ -1,0 +1,322 @@
+---
+title: "Homework 7 - Data Manipulation"
+author: 'Li Zhang'
+date: '07/14/2021'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+*Warning* I will continue restricting the use of external libraries in R, particularly `tidyverse` libraries. You may choose to use `ggplot2`, but take care that the plots you produce are at least as readable as the equivalent plots in base R. You will be allowed to use whatever libraries tickle your fancy in the final project.
+
+If you choose SAS for an exercise, you may use `IML`, `DATA` operations or `PROC SQL` at your discretion.
+
+# Exercise 1. 
+
+### Background
+
+I was interested in health of bee colonies in the United States, so I downloaded data from the USDA NASS site (https://quickstats.nass.usda.gov, listed under `SURVEY > ANIMALS & PRODUCTS > SPECIALTY > HONEY`)
+
+
+## Part a.
+
+Download the file `colonies.csv` if you choose R, or `coloniesSAS.csv` for SAS. This file has been edited to be in the wide format. The first column identifies the state and the next 20 columns are `HONEY, BEE COLONIES - INVENTORY, MEASURED IN COLONIES` for the years 1995-2014. Read the data into a data frame or data table, and subset the data to include only the Central Plains states, 
+
+`'NEBRASKA','KANSAS','SOUTH DAKOTA','MINNESOTA','IOWA','MISSOURI','OKLAHOMA'`.  
+
+**Do not print this table**
+
+```{r}
+
+exe1.data<-read.csv("colonies.csv", header=TRUE,check.names=FALSE)
+#exe1.data
+
+
+
+exe1.sub1<-exe1.data[exe1.data$State %in% 
+                            c("NEBRASKA",
+                              "KANSAS",
+                              "SOUTH DAKOTA", 
+                              "MINNESOTA", 
+                              "IOWA",
+                              "MISSOURI", 
+                              "OKLAHOMA"),]
+exe1.sub1
+
+
+
+```
+
+## Part b.
+
+Reshape the data into the long format. There should be only 3 columns in the long data set, one column identifying ``State`, one column identifying `Year` and one column with `Value` of colony inventory. **Do not print this table**
+
+```{r}
+
+stack.dat<-reshape(exe1.sub1, 
+                   direction="long",
+                   varying=list(2:21),
+                   v.names="Value",
+                   idvar="State",
+                   timevar="Year",
+                   times=1995:2014,
+                   new.row.names=1:140,
+                   
+                   )   
+
+stack.dat
+
+
+```
+
+## Part c.
+
+Plot `Value` by `Year`, with `Year` as the independent variable. We will want to see a boxplot, so you may need to specify `Year` to be a factor (or class). The actual Year values may not be correct after the reshape; you are not required to edit the values, but you may if you choose.
+
+```{r}
+
+stack.dat$Year<-as.factor(stack.dat$Year)
+
+par(las=2,cex.axis=0.75)
+bp<-(boxplot(Value~Year, data=stack.dat,main=" Value vs Year", 
+        xlab="Year", ylab="Value", xaxt="n"))
+axis(1, at=seq(length(bp$names)),
+labels=bp$names,
+cex.axis=0.75
+)
+
+
+
+```
+
+# Exercise 2.
+
+### Background
+
+The data for this exercise comes from the same source as Exercise 1, but instead the values are from `HONEY - PRODUCTION, MEASURED IN LB / COLONY`. However, the data in this exercise are in the long format.
+
+## Part a.
+
+Download the file `production.csv` if you choose R, or `productionSAS.csv` for SAS. The first column identifies the `State`, the second column `Year` and the third column is the `Value` for `HONEY - PRODUCTION, MEASURED IN LB / COLONY`. Read the data into a data frame or data table, and subset the data to include only the Central Plains states, 
+
+`'NEBRASKA','KANSAS','SOUTH DAKOTA','MINNESOTA','IOWA','MISSOURI','OKLAHOMA'`.  
+
+**Do not print this table**
+
+```{r}
+
+exe2.data<-read.csv("production.csv", header=TRUE)
+#exe2.data
+
+exe2.sub1<-exe2.data[exe2.data$State %in% 
+                       c("NEBRASKA",
+                         "KANSAS", 
+                         "SOUTH DAKOTA", 
+                         "MINNESOTA", 
+                         "IOWA", 
+                         "MISSOURI",
+                         "OKLAHOMA"),]
+exe2.sub1
+```
+
+## Part b.
+
+Reshape or transpose this data from the long form to the wide form. This table should have 7 rows, one for each state in the selection.
+
+```{r}
+ProductionWide<-reshape(exe2.sub1, 
+                        idvar="State",
+                        timevar="Year", 
+                        direction="wide", 
+                        new.row.names=1:7,)
+#ProductionWide
+```
+
+## Part c.
+
+Name the reshaped table `ProductionWide`. The first column should be the name of the `State`. If you've reshaped correctly, the code below will produce a cluster plot with 7 leaves; edit `eval=FALSE` to `eval=TRUE` to include the plot in your output.
+
+If you choose SAS, I've included similar code to call PROC CLUSTER in the template.
+
+```{r,eval=TRUE}
+row.names(ProductionWide) <- ProductionWide[,1]
+production.dist <- dist(scale(ProductionWide[,-1]), method="euclidean")
+production.clust <- hclust(production.dist,method="ward.D")
+plot(production.clust)
+```
+
+
+
+
+# Exercise 3
+
+Kruskal and Wallis describe a one-way analysis of variance method based on ranks (https://www.jstor.org/stable/2280779). We will use this method to analyze the carbon loss from the Khan data set.
+
+### Part a.
+
+Read the Khan data and add the `CarbonLoss` column as previously described. Compute mean $m_i$, standard deviation $s_i$ and count $n_i$ for `CarbonLoss` in each combination of `Fertilizer` and `Rotation`. This should produce 9 means. You may need to need to add a grouping variable, such as
+`khan.dat$Group <- factor(khan.dat$Fertilizer):factor(khan.dat$Rotation)` That is, the combination of `none` and `C-C` will form one group, `none` and `C-O-H` will form another group, etc.
+
+```{r}
+exe3_table=read.csv("Khan.csv", header=TRUE)
+exe3_table$CarbonLoss<-exe3_table$Mean05-exe3_table$Mean55
+exe3_table$Group<-factor(exe3_table$Fertilizer):factor(exe3_table$Rotation)
+exe3_table
+exe3_table1<-data.frame(exe3_table$Group, exe3_table$CarbonLoss )
+exe3_table1
+colnames(exe3_table1)<-c("Group", "CarbonLoss")
+exe3_table1
+
+n<-aggregate(exe3_table1[,2], list(exe3_table1$Group), mean)
+names(n)<-c("Group","Mean(m)")
+k<-aggregate(exe3_table1[,2], list(exe3_table1$Group), sd)
+names(k)<-c("Group","sd(s)")
+m<-aggregate(exe3_table1[,2], list(exe3_table1$Group), length)
+names(m)<-c("Group","Count(n)")
+
+table_result<-Reduce(merge, list(n,k,m))
+table_result
+
+```
+
+
+### Part b.
+
+Determine the rank $r_{j} = \text{rank}(y_{j})$ for the $j = 1, \dots, N$ values in `y = CarbonLoss`, independent of group, with the smallest value is given the smallest rank (1).
+
+```{r}
+
+r<-rank(exe3_table1$CarbonLoss)
+r
+
+exe3_table2<-exe3_table1[order(exe3_table1$CarbonLoss),]
+#exe3_table2
+
+
+```
+
+Calculate 
+
+$$
+H = \frac{12}{N(N+1)}\sum_{i=1}^C \frac{R_i^2}{n_i} - 3(N+1) 
+$$
+
+where (quoting from Kruskal and Wallis)
+
+$$
+\begin{aligned}
+C & = \text{the number of samples,} \\
+n_i & = \text{the number of observations in the } i \text{th sample,} \\
+N & = \sum n_i \text{ the number of observations in all samples combined,} \\
+R_i& = \text{the sum of ranks in the } i \text{th sample,}
+\end{aligned}
+$$
+
+In this exercise, the $i^th$ sample will correspond to the $i^th$ grouping variable defined in the part a.
+
+```{r}
+
+sum1<-((r[1]+r[2]+r[3])^2/3)
+sum2<-((r[4]+r[5]+r[6])^2/3)
+sum3<-((r[7]+r[8]+r[9])^2/3)
+sum4<-((r[10]+r[11]+r[12])^2/3)
+sum5<-((r[13]+r[14]+r[15])^2/3)
+sum6<-((r[16]+r[17]+r[18])^2/3)
+sum7<-((r[19]+r[20]+r[21])^2/3)
+sum8<-((r[22]+r[23]+r[24])^2/3)
+sum9<-((r[25]+r[26]+r[27])^2/3)
+sum<-sum1+sum2+sum3+sum4+sum5+sum6+sum7+sum8+sum9
+C<-9
+N<-27
+H<-(12/(N*(N+1)))*sum-(3*(N+1))
+H
+
+
+
+```
+
+### Part c.
+
+$H$ can be approximated as $\chi^2$ with $C-1$ degrees of freedom. Use `pchisq` to calculate an upper-tail probability.
+
+```{r}
+
+pchisq(H, (C-1), lower.tail = FALSE)
+
+```
+
+You can compare your results with
+
+```{r,eval=TRUE}
+kruskal.test(CarbonLoss ~ Group,exe3_table1)
+```
+#aggregate.dat
+Is the combination of fertilizer and crop rotation predictive of carbon loss?
+```{r}
+# Yes. I think that 
+# The combination of fertilizer and crop rotation is 
+# predictive of Carbon loss.
+```
+
+# Exercise 4.
+
+### Part a.
+
+Download the two files from D2L `ncaa2018.csv` and `ncaa2019.csv` (`ncaa2018SAS.csv` and `ncaa2019SAS.csv` for SAS), and read into data frames or tables. `ncaa2018.csv` comes from the same source as `elo.csv` from Homework 5, while `ncaa2019.csv` is the corresponding more recent data. These tables do not contain identical sets of columns, but we will be able to merge `Finish` by individual wrestlers.
+
+```{r}
+
+exe4_data1<-read.csv("ncaa2018.csv", header=TRUE)
+#exe4_data1
+
+
+exe4_data2<-read.csv("ncaa2019.csv", header=TRUE)
+#exe4_data2
+
+```
+
+### Part b.
+
+The tables list the wrestlers qualifying for the NCAA 2018 and 2019 National Championships, respectively. Merge the tables into a single table that contains only those wrestlers who qualified for both tournaments. Use the columns `Last` and `First` to merge on; neither is unique for all wrestlers. 
+
+Along with `Last` and `First`, the merged table should have columns corresponding to `Finish` 2018,  `Finish` 2019, `Weight` 2018 and `Weight` 2019. You can leave the column names as the defaults produced by R or SAS. To check the merge, print the number of rows in the table, and determine if there are any missing values in either `Finish` column (`sum` or `any` are sufficient. *Do not print the table*.
+
+```{r}
+
+exe4_table<-merge(exe4_data1, exe4_data2, by=c("Last", "First"))
+#exe4_table
+
+
+row_number<-nrow(exe4_table)
+row_number
+
+
+sum(is.na(exe4_table$Finish.x))
+any(is.na(exe4_table$Finish.x))
+#no, there is not any missing values in either 'Finish" column
+
+```
+
+### Part c.
+
+Print a contingency table comparing `Weight` for 2018 and `Weight` for 2019. The sum of all cells in this table will be equal to the total number of wrestlers that competed in both tournaments; the sum of the main diagonal will be the number of wrestlers that competed in the same weight class for both. How many wrestlers changed weight classes?
+
+```{r}
+
+Contingency_table<-table(exe4_table$Weight.x,exe4_table$Weight.y )
+Contingency_table
+
+#total number of wrestlers that competed in both tournaments.
+sum(Contingency_table)
+
+
+#the number of wrestlers that competed in the same weight class for both.
+sum(diag(Contingency_table))
+
+
+#wrestlers changed weight classes
+Count_weight_Change<-(sum(Contingency_table)-sum(diag(Contingency_table)))
+Count_weight_Change
+```
+
+
